@@ -3,77 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pixel Art Maker</title>
+    <title>Pixel Art Maker with Timer</title>
     <style>
-        body {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin: 0;
-            padding: 20px;
-            overflow: hidden; /* Prevent scrolling */
-        }
-
-        #grid {
+        /* Add your CSS styles here */
+        #canvas {
             display: grid;
-            grid-template-columns: repeat(1000, 10px); /* Change to fit 1000 columns */
-            grid-template-rows: repeat(1000, 10px);    /* Change to fit 1000 rows */
-            border: 1px solid black;
+            grid-template-columns: repeat(16, 30px);
+            gap: 1px;
         }
-
         .pixel {
-            width: 10px;         /* Change size to fit the view */
-            height: 10px;        /* Change size to fit the view */
-            border: 1px solid #ddd;
-            background-color: white; /* Default color */
-            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            background-color: white;
+            border: 1px solid #ccc;
         }
-
-        #colorPicker {
-            margin: 20px;
+        .pixel.active {
+            background-color: red; /* Change this to your desired pixel color */
         }
-
-        #message {
-            margin: 10px;
-            font-size: 16px;
+        #timer {
+            margin-top: 20px;
+            font-size: 20px;
             color: red;
         }
     </style>
 </head>
 <body>
     <h1>Pixel Art Maker</h1>
-    <input type="color" id="colorPicker" value="#000000">
-    <div id="grid"></div>
-    <div id="message"></div>
+    <div id="canvas"></div>
+    <div id="timer"></div>
 
     <script>
-        const grid = document.getElementById('grid');
-        const colorPicker = document.getElementById('colorPicker');
-        const message = document.getElementById('message');
+        const gridSize = 16; // Change this for a larger/smaller grid
+        const canvas = document.getElementById('canvas');
+        const timerDisplay = document.getElementById('timer');
         let canPlacePixel = true;
 
-        // Limit the number of pixels created to avoid performance issues.
         // Create the grid
-        for (let i = 0; i < 1000 * 1000; i++) {
+        for (let i = 0; i < gridSize * gridSize; i++) {
             const pixel = document.createElement('div');
-            pixel.className = 'pixel';
-            pixel.addEventListener('click', () => placePixel(pixel));
-            grid.appendChild(pixel);
+            pixel.classList.add('pixel');
+            pixel.addEventListener('click', function() {
+                placePixel(pixel);
+            });
+            canvas.appendChild(pixel);
         }
 
         function placePixel(pixel) {
             if (canPlacePixel) {
-                pixel.style.backgroundColor = colorPicker.value;
-                message.textContent = ''; // Clear any previous message
-                canPlacePixel = false; // Prevent further pixel placement
-
-                // Enable pixel placement after 60 seconds
-                setTimeout(() => {
-                    canPlacePixel = true;
-                }, 60000); // 60000 milliseconds = 1 minute
+                pixel.classList.toggle('active');
+                startTimer();
             } else {
-                message.textContent = 'Please wait 1 minute before placing another pixel!';
+                alert('You cannot place another pixel yet! Wait for the timer to finish.');
             }
+        }
+
+        function startTimer() {
+            canPlacePixel = false;
+            let timeLeft = 300; // 5 minutes in seconds
+            timerDisplay.textContent = `Time until you can place the next pixel: ${formatTime(timeLeft)}`;
+            
+            const timerInterval = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = `Time until you can place the next pixel: ${formatTime(timeLeft)}`;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    canPlacePixel = true;
+                    timerDisplay.textContent = "You can place a pixel again!";
+                }
+            }, 1000);
+        }
+
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${minutes}m ${secs < 10 ? '0' : ''}${secs}s`;
         }
     </script>
 </body>
