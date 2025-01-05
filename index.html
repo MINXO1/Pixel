@@ -11,13 +11,25 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            overflow: hidden; /* Prevents scrolling when zooming */
+        }
+        #canvasContainer {
+            position: relative;
+            overflow: hidden; 
+            width: 100%;
+            max-width: 100vw; /* Responsive */
+            height: 100vh; /* Responsive */
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
         #canvas {
             display: grid;
             grid-template-columns: repeat(200, 20px);
             grid-auto-rows: 20px;
-            border: 2px solid #ccc;
-            margin-top: 10px;
+            transform-origin: top left; /* Zoom from top left */
+            transition: transform 0.2s; /* Smooth zoom effect */
+            touch-action: none; /* Prevents touch actions like scrolling */
         }
         .pixel {
             width: 20px;
@@ -30,6 +42,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            flex-wrap: wrap; /* Allows wrapping on small screens */
         }
         #timer {
             margin-top: 20px;
@@ -41,13 +54,16 @@
             background-color: white;
             border: 1px solid #ccc;
             padding: 10px;
-            position: absolute;
+            position: fixed;
             top: 50px;
             left: 50px;
             z-index: 1000;
+            max-height: 80%;
+            overflow-y: auto;
         }
         #adminPanel input, #adminPanel select {
-            width: 100px;
+            width: initial; /* Width as per content */
+            min-width: 100px; /* Minimum width for usability */
         }
         .color-palette {
             display: flex;
@@ -58,6 +74,9 @@
             cursor: pointer;
             border: 1px solid #ddd;
             margin-right: 2px;
+        }
+        .selected {
+            border: 2px solid #000; /* Highlight selected color */
         }
     </style>
 </head>
@@ -75,14 +94,18 @@
         <button id="resetButton">Reset Canvas</button>
         <label for="userId">User ID: </label>
         <input type="text" id="userId" placeholder="Enter user ID" />
+        <button id="lockColorButton">Lock Color</button> 
     </div>
-    <div id="canvas"></div>
+    <div id="canvasContainer">
+        <div id="canvas"></div>
+    </div>
     <div id="timer"></div>
 
     <div id="adminPanel">
         <h2>Admin Panel</h2>
         <button id="showUsersButton">Show User Pixels</button>
         <button id="resetAllPixelsButton">Reset All Pixels</button>
+        <button id="deletePixelButton">Delete Last Pixel</button>
         <label for="timerDuration">Set Timer (secs): </label>
         <input type="number" id="timerDuration" value="300" />
         <button id="setTimerButton">Set Timer</button>
@@ -96,9 +119,10 @@
         const timerDisplay = document.getElementById('timer');
         const userIdInput = document.getElementById('userId');
         const adminPanel = document.getElementById('adminPanel');
-        const pixelsLog = {};
+        const pixelsLog = [];
         let canPlacePixel = true;
         let timerDuration = 300; // default 5 minutes in seconds
+        let lastPixel = null; // to track last pixel placed
 
         // Create the grid
         for (let i = 0; i < gridSize * gridSize; i++) {
@@ -113,12 +137,12 @@
         function placePixel(pixel, index) {
             if (canPlacePixel) {
                 const userId = userIdInput.value || 'Anonymous';
-                const color = pixel.style.backgroundColor;
+                const selectedColor = document.querySelector('.palette-color.selected')?.getAttribute('data-color');
 
-                if (color) {
-                    pixel.style.backgroundColor = color;
-                    pixelsLog[userId] = pixelsLog[userId] || {};
-                    pixelsLog[userId][index] = color; // Save the user's pixel data
+                if (selectedColor) {
+                    pixel.style.backgroundColor = selectedColor;
+                    pixelsLog.push({userId, index, color: selectedColor}); // Record the placement
+                    lastPixel = { pixel, color: selectedColor }; // Track the last pixel
                     startTimer();
                 } else {
                     alert('Please choose a color before placing a pixel!');
@@ -157,7 +181,19 @@
             pixels.forEach(pixel => {
                 pixel.style.backgroundColor = 'white';
             });
-            Object.keys(pixelsLog).forEach(user => delete pixelsLog[user]); // Reset user logs
+            pixelsLog.length = 0; // Reset user logs
+        });
+
+        // Delete Last Placed Pixel
+        document.getElementById('deletePixelButton').addEventListener('click', function() {
+            if (lastPixel) {
+                lastPixel.pixel.style.backgroundColor = 'white'; // Remove color
+                pixelsLog.pop(); // Remove last log entry
+                lastPixel = null; // Reset last pixel
+                alert("Last pixel deleted!");
+            } else {
+                alert("No pixels to delete!");
+            }
         });
 
         // Admin panel controls
@@ -172,7 +208,7 @@
             pixels.forEach(pixel => {
                 pixel.style.backgroundColor = 'white';
             });
-            Object.keys(pixelsLog).forEach(user => delete pixelsLog[user]); // Reset user logs
+            pixelsLog.length = 0; // Reset user logs
             alert("All pixels have been reset!");
         });
 
@@ -209,17 +245,34 @@
                 const selectedColor = this.getAttribute('data-color');
                 document.querySelector('.palette-color.selected')?.classList.remove('selected');
                 this.classList.add('selected');
-                canvas.style.setProperty('--user-color', selectedColor);
             });
         });
 
         function displayUserLogs() {
             let logs = '<h3>User Pixel Logs:</h3>';
-            for (const user in pixelsLog) {
-                logs += `<strong>${user}</strong>: ${JSON.stringify(pixelsLog[user])}<br>`;
+            for (const log of pixelsLog) {
+                logs += `<strong>${log.userId}</strong> placed a pixel at index ${log.index} with color ${log.color}<br>`;
             }
             document.getElementById('userLogs').innerHTML = logs;
         }
+
+        // Zoom functionality
+        let scale = 1;
+        const zoomStep = 0.1;
+
+        canvasContainer.addEventListener('wheel', (event) => {
+            event.preventDefault(); // Prevent default scroll behavior
+            if (event.deltaY < 0) {
+                scale += zoomStep;
+            } else {
+                scale = Math.max(1, scale - zoomStep); // Prevent zooming out too much
+            }
+            canvas.style.transform = `scale(${scale})`; // Apply zoom
+        });
+
+        // Set default selected color on load
+        document.querySelector('.palette-color').classList.add('selected');
+
     </script>
 </body>
 </html>
