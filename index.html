@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pixel Art Maker</title>
+    <title>Pixel Art Maker with Admin Panel</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -14,18 +14,14 @@
         }
         #canvas {
             display: grid;
-            grid-template-columns: repeat(1000, 1px);
-            grid-auto-rows: 1px;
-            border: 1px solid #ccc;
+            grid-template-columns: repeat(200, 20px);
+            grid-auto-rows: 20px;
         }
         .pixel {
-            width: 1px;
-            height: 1px;
+            width: 20px;
+            height: 20px;
             background-color: white;
             border: 1px solid #ddd;
-        }
-        .pixel.active {
-            /* The active color will be set by the selected color */
         }
         #controls {
             margin-top: 20px;
@@ -38,6 +34,19 @@
             font-size: 20px;
             color: red;
         }
+        #adminPanel {
+            display: none; /* Hidden by default */
+            background-color: white;
+            border: 1px solid #ccc;
+            padding: 10px;
+            position: absolute;
+            top: 50px;
+            left: 50px;
+            z-index: 1000;
+        }
+        #adminPanel input {
+            width: 100px;
+        }
     </style>
 </head>
 <body>
@@ -49,11 +58,20 @@
     <div id="canvas"></div>
     <div id="timer"></div>
 
+    <div id="adminPanel">
+        <h2>Admin Panel</h2>
+        <button id="showUsersButton">Show User Pixels</button>
+        <button id="resetAllPixelsButton">Reset All Pixels</button>
+        <button id="closeAdminPanel">Close</button>
+    </div>
+
     <script>
-        const gridSize = 1000; // 1000x1000 grid
+        const gridSize = 200; // 200x200 grid
         const canvas = document.getElementById('canvas');
         const timerDisplay = document.getElementById('timer');
         const colorPicker = document.getElementById('colorPicker');
+        const adminPanel = document.getElementById('adminPanel');
+        let pixelData = {};  // Data to store pixel colors
         let canPlacePixel = true;
 
         // Create the grid
@@ -61,14 +79,15 @@
             const pixel = document.createElement('div');
             pixel.classList.add('pixel');
             pixel.addEventListener('click', function() {
-                placePixel(pixel);
+                placePixel(pixel, i);
             });
             canvas.appendChild(pixel);
         }
 
-        function placePixel(pixel) {
+        function placePixel(pixel, index) {
             if (canPlacePixel) {
                 pixel.style.backgroundColor = colorPicker.value;
+                pixelData[index] = colorPicker.value; // Save the color for the pixel
                 startTimer();
             } else {
                 alert('You cannot place another pixel yet! Wait for the timer to finish.');
@@ -104,6 +123,37 @@
             pixels.forEach(pixel => {
                 pixel.style.backgroundColor = 'white';
             });
+            pixelData = {}; // Reset the pixel data
+        });
+
+        // Admin panel controls
+        document.getElementById('showUsersButton').addEventListener('click', function() {
+            console.log(pixelData); // Log the colors of the pixels to the console
+            alert('Check the console for user pixel placements.');
+        });
+
+        document.getElementById('resetAllPixelsButton').addEventListener('click', function() {
+            const pixels = document.querySelectorAll('.pixel');
+            pixels.forEach(pixel => {
+                pixel.style.backgroundColor = 'white';
+            });
+            pixelData = {};
+        });
+
+        document.getElementById('closeAdminPanel').addEventListener('click', function() {
+            adminPanel.style.display = 'none';
+        });
+
+        // Admin access via console
+        window.addEventListener('keydown', function(event) {
+            if (event.ctrlKey && event.key === 'm') { // Trigger admin access with Ctrl + M
+                const adminCode = prompt("Enter admin code:");
+                if (adminCode === "minxex") {
+                    adminPanel.style.display = 'block'; // Show admin panel
+                } else {
+                    alert("Invalid admin code");
+                }
+            }
         });
     </script>
 </body>
