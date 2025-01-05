@@ -12,29 +12,22 @@ const PORT = process.env.PORT || 3000;
 app.use(express.static('public'));
 
 // Initialize pixel canvas (1000x1000 pixels)
-const canvasSize = 1000;
+const canvasSize = 1000; 
 let pixelData = Array(canvasSize).fill().map(() => Array(canvasSize).fill('white'));
-
-// Cooldown period (in milliseconds)
 const cooldown = 10000; // 10 seconds
 const lastPlaced = {};
 
 io.on('connection', (socket) => {
     console.log('New client connected');
-    
-    // Send current pixel data to the newly connected client
     socket.emit('init', pixelData);
 
-    // Place pixel when client emits the event
     socket.on('placePixel', ({ x, y, color }) => {
         const currentTime = Date.now();
         const userId = socket.id;
 
-        // Implement cooldown for each user
         if (!lastPlaced[userId] || currentTime - lastPlaced[userId] > cooldown) {
             lastPlaced[userId] = currentTime;
 
-            // Limited bounds check
             if (x >= 0 && x < canvasSize && y >= 0 && y < canvasSize) {
                 pixelData[y][x] = color;
                 io.emit('pixelPlaced', { x, y, color });
