@@ -190,6 +190,11 @@
             <button id="viewLogs">View Logs</button>
             <button id="resetAll">Reset All Settings</button>
             <button id="toggleAdminMenu">Toggle Admin Menu</button>
+            <div>
+                <label for="cooldownInput">Set Pixel Placement Cooldown (seconds):</label>
+                <input type="number" id="cooldownInput" min="0" placeholder="5" />
+                <button id="setCooldownTime">Set Cooldown</button>
+            </div>
         </div>
         <div id="adminAnnouncements"></div> <!-- Announcements area -->
     </div>
@@ -201,7 +206,8 @@
         const gridSize = 100; // 100x100 grid
         let selectedColor = '#FF0000'; // Default color for drawing
         let isCanvasLocked = false;
-
+        let cooldownTime = 5000; // Default cooldown time (5 seconds)
+        
         // Create grid of pixels
         for (let i = 0; i < gridSize * gridSize; i++) {
             const pixel = document.createElement('div');
@@ -234,7 +240,6 @@
 
         // Place pixel logic
         let lastPlacementTime = 0;
-        const cooldownTime = 5000; // 5 seconds cooldown in milliseconds
 
         function placePixel(index) {
             const currentTime = Date.now();
@@ -268,7 +273,7 @@
         adminLoginButton.addEventListener('click', () => {
             const enteredPassword = adminPasswordInput.value;
             if (enteredPassword === 'minxex') {
-                adminMessage.textContent = 'Access granted!'; 
+                adminMessage.textContent = 'Access granted!';
                 adminMessage.style.color = 'green';
                 adminOptions.style.display = 'block'; // Show admin options
                 updateAdminAnnouncement('Admin features are now accessible.'); // Add admin announcement
@@ -517,6 +522,19 @@
                 adminOptions.style.display = 'none'; // Hide admin options on open
             }
         });
+
+        // Set cooldown time function
+        document.getElementById('setCooldownTime').onclick = function() {
+            const cooldownInput = document.getElementById('cooldownInput').value;
+            const cooldownSeconds = parseInt(cooldownInput);
+            if (!isNaN(cooldownSeconds) && cooldownSeconds >= 0) {
+                cooldownTime = cooldownSeconds * 1000; // Convert seconds to milliseconds
+                alert(`Cooldown time set to ${cooldownSeconds} seconds.`);
+                updateAdminAnnouncement(`Cooldown for pixel placement updated to ${cooldownSeconds} seconds.`);
+            } else {
+                alert('Invalid input for cooldown time!');
+            }
+        };
 
         // Panning and zooming functionality
         let scale = 1; // Default scale
