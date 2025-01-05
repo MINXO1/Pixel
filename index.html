@@ -98,6 +98,10 @@
             border: 2px solid #ff4500;
             padding: 20px;
             z-index: 1000; /* Show above everything else */
+            width: 300px;
+            height: auto;
+            overflow-y: auto;
+            max-height: 60vh; /* Limit height for the panel */
         }
 
         #adminPanel input {
@@ -112,6 +116,11 @@
             border: none;
             padding: 5px 10px;
             cursor: pointer;
+            margin-bottom: 10px; /* Space between buttons */
+        }
+
+        #adminPanel div {
+            margin-bottom: 10px; /* Space between sections */
         }
     </style>
 </head>
@@ -140,6 +149,29 @@
         <input type="password" id="adminPassword" placeholder="Enter admin password" />
         <button id="adminLogin">Login</button>
         <div id="adminMessage" style="color: red;"></div>
+        <div id="adminOptions" style="display: none;">
+            <button id="clearCanvas">Clear Canvas</button>
+            <button id="resetColors">Reset Colors</button>
+            <button id="removePixel">Remove Pixel</button>
+            <button id="fillColor">Fill All Pixels</button>
+            <button id="randomizeColors">Randomize Colors</button>
+            <button id="setGridSize">Set Grid Size</button>
+            <button id="saveCanvas">Save Canvas</button>
+            <button id="loadCanvas">Load Canvas</button>
+            <button id="showPixelCount">Show Pixel Count</button>
+            <button id="lockCanvas">Lock Canvas</button>
+            <button id="unlockCanvas">Unlock Canvas</button>
+            <button id="toggleGrid">Toggle Grid Lines</button>
+            <button id="clearAnnouncements">Clear Announcements</button>
+            <button id="setDefaultColors">Set Default Colors</button>
+            <button id="exportToImage">Export to Image</button>
+            <button id="importFromImage">Import From Image</button>
+            <button id="changeBackgroundColor">Change Background Color</button>
+            <button id="setPixelLimit">Set Pixel Limit</button>
+            <button id="viewLogs">View Logs</button>
+            <button id="resetAll">Reset All Settings</button>
+            <button id="toggleAdminMenu">Toggle Admin Menu</button>
+        </div>
     </div>
 
     <script>
@@ -148,6 +180,7 @@
         const pixels = [];
         const gridSize = 100; // 100x100 grid
         let selectedColor = '#FF0000'; // Default color for drawing
+        let isCanvasLocked = false;
 
         // Create grid of pixels
         for (let i = 0; i < gridSize * gridSize; i++) {
@@ -155,7 +188,9 @@
             pixel.className = 'pixel';
             pixel.dataset.index = i; // Store index for reference
             pixel.addEventListener('click', function () {
-                placePixel(i);
+                if (!isCanvasLocked) {
+                    placePixel(i);
+                }
             });
             canvas.appendChild(pixel);
             pixels.push(pixel);
@@ -168,6 +203,7 @@
                 document.querySelector('.color.selected')?.classList.remove('selected');
                 this.classList.add('selected');
                 selectedColor = this.dataset.color; // Set selected color
+                validateSubmit();
             });
         });
 
@@ -207,18 +243,234 @@
         const adminPasswordInput = document.getElementById('adminPassword');
         const adminLoginButton = document.getElementById('adminLogin');
         const adminMessage = document.getElementById('adminMessage');
-
+        const adminOptions = document.getElementById('adminOptions');
+        
         adminLoginButton.addEventListener('click', () => {
             const enteredPassword = adminPasswordInput.value;
             if (enteredPassword === 'minxex') {
                 adminMessage.textContent = 'Access granted!'; 
                 adminMessage.style.color = 'green';
-                // Additional admin functionalities can be added here
-                // For example, clear the canvas or reset pixels
+                adminOptions.style.display = 'block'; // Show admin options
             } else {
                 adminMessage.textContent = 'Incorrect password!';
             }
         });
+
+        document.getElementById('clearCanvas').onclick = function() {
+            pixels.forEach(pixel => pixel.style.backgroundColor = 'white');
+            updateAnnouncement('Canvas cleared!');
+        };
+
+        document.getElementById('resetColors').onclick = function() {
+            pixels.forEach(pixel => pixel.style.backgroundColor = 'white');
+            updateAnnouncement('Colors reset to default!');
+        };
+
+        document.getElementById('removePixel').onclick = function() {
+            const index = prompt('Enter the pixel index to remove (0 to 9999):');
+            if (index >= 0 && index < pixels.length) {
+                pixels[index].style.backgroundColor = 'white';
+                updateAnnouncement(`Pixel at index ${index} removed!`);
+            } else {
+                alert('Invalid index!');
+            }
+        };
+
+        document.getElementById('fillColor').onclick = function() {
+            const fillColor = prompt('Enter a color to fill all pixels (e.g., #FF00FF):');
+            if (fillColor) {
+                pixels.forEach(pixel => pixel.style.backgroundColor = fillColor);
+                updateAnnouncement(`All pixels filled with color ${fillColor}!`);
+            }
+        };
+
+        document.getElementById('randomizeColors').onclick = function() {
+            pixels.forEach(pixel => {
+                const randomColor = '#' + Math.floor(Math.random()*16777215).toString(16); // Random hex color
+                pixel.style.backgroundColor = randomColor;
+            });
+            updateAnnouncement('All pixels randomized!');
+        };
+
+        document.getElementById('setGridSize').onclick = function() {
+            const newSize = prompt('Enter new grid size (e.g. 80 for 80x80):');
+            if (newSize > 0) {
+                canvas.innerHTML = ''; // Clear current grid
+                for (let i = 0; i < newSize * newSize; i++) {
+                    const pixel = document.createElement('div');
+                    pixel.className = 'pixel';
+                    pixel.dataset.index = i; // Store index for reference
+                    pixel.addEventListener('click', function () {
+                        if (!isCanvasLocked) {
+                            placePixel(i);
+                        }
+                    });
+                    canvas.appendChild(pixel);
+                    pixels.push(pixel);
+                }
+                canvas.style.gridTemplateColumns = `repeat(${newSize}, 20px)`; // Update grid size
+                updateAnnouncement(`Grid size updated to ${newSize}x${newSize}!`);
+            } else {
+                alert('Invalid size!');
+            }
+        };
+
+        document.getElementById('saveCanvas').onclick = function() {
+            const data = []; // Save pixel colors
+            pixels.forEach(pixel => {
+                data.push(pixel.style.backgroundColor || 'white');
+            });
+            localStorage.setItem('pixelData', JSON.stringify(data));
+            updateAnnouncement('Canvas saved!');
+        };
+
+        document.getElementById('loadCanvas').onclick = function() {
+            const data = JSON.parse(localStorage.getItem('pixelData'));
+            if (data) {
+                data.forEach((color, index) => {
+                    pixels[index].style.backgroundColor = color;
+                });
+                updateAnnouncement('Canvas loaded!');
+            } else {
+                alert('No saved canvas found!');
+            }
+        };
+
+        document.getElementById('showPixelCount').onclick = function() {
+            const filledPixels = pixels.filter(pixel => pixel.style.backgroundColor !== 'white').length;
+            updateAnnouncement(`Total filled pixels: ${filledPixels}`);
+        };
+
+        document.getElementById('lockCanvas').onclick = function() {
+            isCanvasLocked = true;
+            updateAnnouncement('Canvas is locked for editing.');
+        };
+
+        document.getElementById('unlockCanvas').onclick = function() {
+            isCanvasLocked = false;
+            updateAnnouncement('Canvas is unlocked for editing.');
+        };
+
+        document.getElementById('toggleGrid').onclick = function() {
+            const pixelElements = document.querySelectorAll('.pixel');
+            pixelElements.forEach(pixel => {
+                pixel.style.border = (pixel.style.border === '1px solid rgba(0, 0, 0, 0.2)') ? 'none' : '1px solid rgba(0, 0, 0, 0.2)';
+            });
+            updateAnnouncement('Grid lines toggled.');
+        };
+
+        document.getElementById('clearAnnouncements').onclick = function() {
+            const announcement = document.getElementById('announcement');
+            announcement.textContent = '';
+            updateAnnouncement('Announcements cleared!');
+        };
+
+        document.getElementById('setDefaultColors').onclick = function() {
+            const defaultColors = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF'];
+            pixels.forEach((pixel, index) => {
+                pixel.style.backgroundColor = defaultColors[index % defaultColors.length];
+            });
+            updateAnnouncement('Set default colors applied!');
+        };
+
+        document.getElementById('exportToImage').onclick = function() {
+            // Create a canvas to export the pixel data
+            const exportCanvas = document.createElement('canvas');
+            exportCanvas.width = gridSize * 20;
+            exportCanvas.height = gridSize * 20;
+            const ctx = exportCanvas.getContext('2d');
+
+            pixels.forEach((pixel, index) => {
+                const x = (index % gridSize) * 20;
+                const y = Math.floor(index / gridSize) * 20;
+                ctx.fillStyle = pixel.style.backgroundColor || 'white';
+                ctx.fillRect(x, y, 20, 20);
+            });
+
+            const link = document.createElement('a');
+            link.download = 'canvas.png';
+            link.href = exportCanvas.toDataURL();
+            link.click();
+            updateAnnouncement('Canvas exported as image!');
+        };
+
+        document.getElementById('importFromImage').onclick = function() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = function(event) {
+                const file = event.target.files[0];
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const image = new Image();
+                    image.src = event.target.result;
+                    image.onload = function() {
+                        const canvasUpload = document.createElement('canvas');
+                        const ctxUpload = canvasUpload.getContext('2d');
+                        canvasUpload.width = gridSize * 20;
+                        canvasUpload.height = gridSize * 20;
+                        ctxUpload.drawImage(image, 0, 0, canvasUpload.width, canvasUpload.height);
+                        // Get pixel data
+                        const imageData = ctxUpload.getImageData(0, 0, canvasUpload.width, canvasUpload.height);
+                        for (let i = 0; i < pixels.length; i++) {
+                            const x = (i % gridSize) * 20;
+                            const y = Math.floor(i / gridSize) * 20;
+                            const index = (y * canvasUpload.width + x) * 4; // RGBA
+                            const rgba = `rgba(${imageData.data[index]}, ${imageData.data[index + 1]}, ${imageData.data[index + 2]}, ${imageData.data[index + 3]})`;
+                            pixels[i].style.backgroundColor = rgba; // Set pixel color
+                        }
+                        updateAnnouncement('Canvas imported from image!');
+                    };
+                };
+                reader.readAsDataURL(file);
+            };
+            input.click();
+        };
+
+        document.getElementById('changeBackgroundColor').onclick = function() {
+            const newColor = prompt('Enter new background color (e.g., #FFFFFF):');
+            if (newColor) {
+                canvasContainer.style.backgroundColor = newColor;
+                updateAnnouncement(`Background color changed to ${newColor}!`);
+            }
+        };
+
+        let pixelLimit = 0; // Default pixel limit
+
+        document.getElementById('setPixelLimit').onclick = function() {
+            const limit = prompt('Set a limit for pixel placements (e.g., 100):');
+            if (!isNaN(limit) && limit > 0) {
+                pixelLimit = limit;
+                alert(`Pixel limit set to ${pixelLimit}`);
+            } else {
+                alert('Invalid limit!');
+            }
+        };
+
+        document.getElementById('viewLogs').onclick = function() {
+            // Implement a simple view log functionality
+            const logContent = `Current Pixel Limit: ${pixelLimit}\nCanvas Locked: ${isCanvasLocked}`;
+            alert(logContent); // Just display the logs in a simple alert for demonstration
+        };
+
+        document.getElementById('resetAll').onclick = function() {
+            // Reset all settings
+            pixels.forEach(pixel => pixel.style.backgroundColor = 'white');
+            canvas.innerHTML = ''; // Clear current grid
+            for (let i = 0; i < gridSize * gridSize; i++) {
+                const pixel = document.createElement('div');
+                pixel.className = 'pixel';
+                pixel.dataset.index = i; // Store index for reference
+                pixel.addEventListener('click', function () {
+                    if (!isCanvasLocked) {
+                        placePixel(i);
+                    }
+                });
+                canvas.appendChild(pixel);
+                pixels.push(pixel);
+            }
+            updateAnnouncement('All settings have been reset to default values!');
+        };
 
         // Open admin panel with Ctrl + M
         document.addEventListener('keydown', (event) => {
@@ -227,6 +479,7 @@
                 adminPanel.style.display = adminPanel.style.display === 'block' ? 'none' : 'block';
                 adminPasswordInput.value = ''; // Clear password input
                 adminMessage.textContent = '';  // Clear previous messages
+                adminOptions.style.display = 'none'; // Hide admin options on open
             }
         });
 
