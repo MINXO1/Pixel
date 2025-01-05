@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>r/place Clone</title>
+    <title>Crimson Pixel</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -67,11 +67,6 @@
             border-color: #000;
         }
 
-        #username {
-            margin-top: 10px;
-            padding: 5px;
-        }
-
         #submit {
             margin-top: 10px;
             padding: 5px 10px;
@@ -91,11 +86,38 @@
             font-size: 16px;
             color: green;
         }
+
+        /* Admin panel styles */
+        #adminPanel {
+            display: none;
+            position: fixed;
+            top: 20%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            border: 2px solid #ff4500;
+            padding: 20px;
+            z-index: 1000; /* Show above everything else */
+        }
+
+        #adminPanel input {
+            padding: 5px;
+            margin-bottom: 10px;
+            width: 100%;
+        }
+
+        #adminPanel button {
+            background-color: #ff4500;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
-    <h1>r/place Clone</h1>
-    <input type="text" id="username" placeholder="Enter username" />
+    <h1>Crimson Pixel</h1>
+    
     <div class="color-palette">
         <div class="color" style="background-color: #FF0000;" data-color="#FF0000"></div>
         <div class="color" style="background-color: #00FF00;" data-color="#00FF00"></div>
@@ -104,11 +126,20 @@
         <div class="color" style="background-color: #FF00FF;" data-color="#FF00FF"></div>
         <div class="color" style="background-color: #00FFFF;" data-color="#00FFFF"></div>
     </div>
+    
     <button id="submit" disabled>Place Pixel</button>
     <div id="announcement"></div>
 
     <div id="canvasContainer">
         <div id="canvas"></div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div id="adminPanel">
+        <h2>Admin Panel</h2>
+        <input type="password" id="adminPassword" placeholder="Enter admin password" />
+        <button id="adminLogin">Login</button>
+        <div id="adminMessage" style="color: red;"></div>
     </div>
 
     <script>
@@ -117,7 +148,6 @@
         const pixels = [];
         const gridSize = 100; // 100x100 grid
         let selectedColor = '#FF0000'; // Default color for drawing
-        let username = '';
 
         // Create grid of pixels
         for (let i = 0; i < gridSize * gridSize; i++) {
@@ -141,16 +171,9 @@
             });
         });
 
-        // Username input
-        const usernameInput = document.getElementById('username');
-        usernameInput.addEventListener('input', function() {
-            username = this.value;
-            validateSubmit();
-        });
-
-        // Enable/disable submit button based on username
+        // Enable/disable submit button based on color selection
         function validateSubmit() {
-            document.getElementById('submit').disabled = !username || !selectedColor;
+            document.getElementById('submit').disabled = !selectedColor;
         }
 
         // Place pixel logic
@@ -164,15 +187,10 @@
                 return;
             }
 
-            if (!username) {
-                alert('Please enter a username!');
-                return;
-            }
-
             const pixel = pixels[index];
             pixel.style.backgroundColor = selectedColor;
             lastPlacementTime = currentTime; // Update last placement time
-            updateAnnouncement(`${username} placed a pixel at ${index} with color ${selectedColor}`);
+            updateAnnouncement(`Placed a pixel at ${index} with color ${selectedColor}`);
         }
 
         // Display announcement
@@ -183,6 +201,34 @@
                 announcement.textContent = '';
             }, 5000); // Hide announcement after 5 seconds
         }
+
+        // Admin panel functionality
+        const adminPanel = document.getElementById('adminPanel');
+        const adminPasswordInput = document.getElementById('adminPassword');
+        const adminLoginButton = document.getElementById('adminLogin');
+        const adminMessage = document.getElementById('adminMessage');
+
+        adminLoginButton.addEventListener('click', () => {
+            const enteredPassword = adminPasswordInput.value;
+            if (enteredPassword === 'minxex') {
+                adminMessage.textContent = 'Access granted!'; 
+                adminMessage.style.color = 'green';
+                // Additional admin functionalities can be added here
+                // For example, clear the canvas or reset pixels
+            } else {
+                adminMessage.textContent = 'Incorrect password!';
+            }
+        });
+
+        // Open admin panel with Ctrl + M
+        document.addEventListener('keydown', (event) => {
+            if (event.ctrlKey && event.key === 'm') {
+                event.preventDefault(); // Prevent default action
+                adminPanel.style.display = adminPanel.style.display === 'block' ? 'none' : 'block';
+                adminPasswordInput.value = ''; // Clear password input
+                adminMessage.textContent = '';  // Clear previous messages
+            }
+        });
 
         // Panning and zooming functionality
         let scale = 1; // Default scale
