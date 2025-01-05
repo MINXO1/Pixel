@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel Art Application</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <h1>Welcome to Pixel Art Application</h1>
+    <div id="canvas-container">
+        <div id="canvas"></div>
+    </div>
+    <div id="palette">
+        <div class="color" style="background-color: red;"></div>
+        <div class="color" style="background-color: green;"></div>
+        <div class="color" style="background-color: blue;"></div>
+        <div class="color" style="background-color: yellow;"></div>
+        <div class="color" style="background-color: black;"></div>
+        <div class="color" style="background-color: white;"></div>
+    </div>
+
+    <div id="statusMessage"></div>
+
+    <!-- Admin Panel -->
+    <div id="adminPanel" style="display:none; position: absolute; top: 20px; left: 20px; background-color: rgba(255, 255, 255, 0.8); padding: 10px; border: 1px solid #000;">
+        <h3>Admin Panel</h3>
+        <button id="clearCanvasBtn">Clear Canvas</button>
+        <p id="adminMessage"></p>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const socket = io();
+        let selectedColor = 'black';
+
+        const colors = document.querySelectorAll('.color');
+        colors.forEach(color => {
+            color.addEventListener('click', () => {
+                selectedColor = color.style.backgroundColor;
+            });
+        });
+
+        const initialCanvasSize = 1000; // Total number of pixels (1000x1000)
+        const pixelSize = 5; // Size of each pixel
+
+        // Create the initial grid
+        for (let y = 0; y < initialCanvasSize; y++) {
+            for (let x = 0; x < initialCanvasSize; x++) {
+                const pixel = document.createElement('div');
+                pixel.classList.add('pixel');
+                pixel.style.width = pixel.style.height = `${pixelSize}px`;
+                pixel.dataset.x = x;
+                pixel.dataset.y = y;
+
+                pixel.addEventListener('click', function() {
+                    placePixel(x, y, selectedColor);
+                });
+
+                canvas.appendChild(pixel);
+            }
+        }
+
+        function placePixel(x, y, color) {
+            socket.emit('placePixel', { x: x, y: y, color: color });
+        }
+
+        socket.on('pixelPlaced', ({ x, y, color }) => {
+            const pixel = canvas.children[y * initialCanvasSize + x];
+            if (pixel) {
+                pixel.style.backgroundColor = color;
+            }
+        });
+
+        socket.on('init', (pixelData) => {
+            pixelData.forEach((row, y) => {
+                row.forEach((color, x) => {
+                    const pixel = canvas.children[y * initialCanvasSize + x];
+                    pixel.style.backgroundColor = color;
+                });
+            });
+        });
+
+        // Status message for cooldown
+        const statusMessage = document.getElementById('statusMessage');
+        socket.on('pixelPlaced', ({ x, y, color }) => {
+            statusMessage.innerText = `Pixel placed at (${x}, ${y})`;
+            setTimeout(() => {
+                statusMessage.innerText = '';
+            }, 3000);
+        });
+
+        // Zoom and Pan Functionality
+        let scale = 1;
+        const canvasContainer = document.getElementById('canvas-container');
+        canvasContainer.style.overflow = 'hidden';
+        let isPanning = false;
+        let startX, startY;
+
+        canvasContainer.addEventListener('wheel', (event) => {
+            event.preventDefault();
+            const zoomFactor = 0.1;
+            scale += (event.deltaY < 0 ? -zoomFactor : zoomFactor);
+            scale = Math.min(Math.max(1, scale), 5); // Limit zoom between 1x to 5x
+            canvas.style.transform = `scale(${scale})`;
+        });
+
+        canvasContainer.addEventListener('mousedown', (event) => {
+            isPanning = true;
+            startX = event.clientX - canvasContainer.offsetLeft;
+            startY = event.clientY - canvasContainer.offsetTop;
+        });
+
+        canvasContainer.addEventListener('mousemove', (event) => {
+            if (isPanning) {
+                const x = event.clientX - canvasContainer.offsetLeft;
+                const y = event.clientY - canvasContainer.offsetTop;
+                const dx = startX - x;
+                const dy = startY - y;
+
+                canvasContainer.scrollLeft += dx;
+                canvasContainer.scrollTop += dy;
+            }
+        });
+
+        canvasContainer.addEventListener('mouseup', () => {
+            isPanning = false;
+        });
+
+        canvasContainer.addEventListener('mouseleave', () => {
+            isPanning = false;
+        });
+
+        // Admin Panel Functionality
+        document.addEventListener('keydown', (event) => {
+            if (event.ctrlKey && event.key === 'm') {
+                const password = prompt("Enter admin password:");
+                if (password === "nigga") {
+                    document.getElementById('adminPanel').style.display = 'block';
+                } else {
+                    alert("Incorrect password!");
+                }
+            }
+        });
+
+        // Clear Canvas function for Admin Panel
+        document.getElementById('clearCanvasBtn').addEventListener('click', () => {
+            pixelData = Array(initialCanvasSize).fill().map(() => Array(initialCanvasSize).fill('white'));
+            io.emit('clearCanvas');
+            alert("Canvas cleared!");
+        });
+
+        socket.on('clearCanvas', () => {
+            for (let y = 0; y < initialCanvasSize; y++) {
+                for (let x = 0; x < initialCanvasSize; x++) {
+                    const pixel = canvas.children[y * initialCanvasSize + x];
+                    if (pixel) {
+                        pixel.style.backgroundColor = 'white';
+                    }
+                }
+            }
+        });
+
+    </script>
+</body>
+</html>
