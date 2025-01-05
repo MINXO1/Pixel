@@ -17,7 +17,6 @@
             position: relative;
             overflow: hidden; 
             width: 100%;
-            max-width: 100vw; /* Responsive */
             height: 100vh; /* Responsive */
             display: flex;
             justify-content: center;
@@ -25,9 +24,9 @@
         }
         #canvas {
             display: grid;
-            grid-template-columns: repeat(200, 20px);
+            grid-template-columns: repeat(100, 20px); /* Smaller canvas: 100x100 */
             grid-auto-rows: 20px;
-            transform-origin: top left; /* Zoom from top left */
+            transform-origin: center; /* Zoom from center */
             transition: transform 0.2s; /* Smooth zoom effect */
             touch-action: none; /* Prevents touch actions like scrolling */
             position: absolute; /* Allowing positioning for drag functionality */
@@ -90,6 +89,21 @@
             padding: 5px;
             resize: none; /* Prevent resizing */
         }
+        #popupAnnouncement {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            border: 1px solid #ccc;
+            padding: 20px;
+            z-index: 2000; /* Above all elements */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        #popupAnnouncement button {
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -104,8 +118,8 @@
             <div class="palette-color" style="background-color: #00FFFF;" data-color="#00FFFF"></div>
         </div>
         <button id="resetButton">Reset Canvas</button>
-        <label for="userId">User ID: </label>
-        <input type="text" id="userId" placeholder="Enter user ID" />
+        <label for="username">Username: </label>
+        <input type="text" id="username" placeholder="Enter username" />
         <button id="lockColorButton">Lock Color</button> 
     </div>
     <div id="canvasContainer">
@@ -130,13 +144,18 @@
         <div id="warningDisplay" style="color: red; font-weight: bold;"></div>
     </div>
 
+    <div id="popupAnnouncement">
+        <div id="popupMessage"></div>
+        <button id="closePopupButton">Close</button>
+    </div>
+
     <div id="announcementDisplay" style="margin-top: 20px; font-size: 18px; font-weight: bold;"></div>
 
     <script>
-        const gridSize = 200; // 200x200 grid
+        const gridSize = 100; // 100x100 grid (smaller canvas)
         const canvas = document.getElementById('canvas');
         const timerDisplay = document.getElementById('timer');
-        const userIdInput = document.getElementById('userId');
+        const usernameInput = document.getElementById('username');
         const adminPanel = document.getElementById('adminPanel');
         const pixelsLog = [];
         let canPlacePixel = true;
@@ -158,12 +177,12 @@
 
         function placePixel(pixel, index) {
             if (canPlacePixel) {
-                const userId = userIdInput.value || 'Anonymous';
+                const username = usernameInput.value || 'Anonymous';
                 const selectedColor = document.querySelector('.palette-color.selected')?.getAttribute('data-color');
 
                 if (selectedColor) {
                     pixel.style.backgroundColor = selectedColor;
-                    pixelsLog.push({userId, index, color: selectedColor}); // Record the placement
+                    pixelsLog.push({username, index, color: selectedColor}); // Record the placement
                     lastPixel = { pixel, color: selectedColor }; // Track the last pixel
                     startTimer();
                 } else {
@@ -271,8 +290,18 @@
         // Post Announcements
         document.getElementById('postAnnouncementButton').addEventListener('click', function() {
             const announcementText = document.getElementById('announcement').value;
-            document.getElementById('announcementDisplay').textContent = announcementText;
+            showPopupAnnouncement(announcementText); // Show the popup announcement
             document.getElementById('announcement').value = ""; // Clear the text area
+        });
+
+        // Function to display announcement in a popup
+        function showPopupAnnouncement(message) {
+            document.getElementById('popupMessage').textContent = message;
+            document.getElementById('popupAnnouncement').style.display = 'block';
+        }
+
+        document.getElementById('closePopupButton').addEventListener('click', function() {
+            document.getElementById('popupAnnouncement').style.display = 'none'; // Close popup
         });
 
         // Admin access via console
@@ -300,7 +329,7 @@
         function displayUserLogs() {
             let logs = '<h3>User Pixel Logs:</h3>';
             for (const log of pixelsLog) {
-                logs += `<strong>${log.userId}</strong> placed a pixel at index ${log.index} with color ${log.color}<br>`;
+                logs += `<strong>${log.username}</strong> placed a pixel at index ${log.index} with color ${log.color}<br>`;
             }
             document.getElementById('userLogs').innerHTML = logs;
         }
