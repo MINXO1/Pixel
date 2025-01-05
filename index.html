@@ -18,6 +18,24 @@
             font-size: 18px;
             color: #333;
             text-align: center;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        #instructions h2 {
+            margin: 0 0 10px;
+            font-size: 24px;
+            color: #007BFF;
+        }
+        #instructions ol {
+            padding-left: 20px;
+            text-align: left;
+        }
+        .instruction-step {
+            margin: 5px 0;
+            color: #555;
+            font-size: 16px;
         }
         #canvasContainer {
             position: relative;
@@ -27,6 +45,8 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            border: 2px solid #007BFF; /* Add border for canvas container */
+            border-radius: 8px;
         }
         #canvas {
             display: grid;
@@ -107,13 +127,13 @@
 <body>
     <h1>Pixel Art Maker</h1>
     <div id="instructions">
-        <p>Instructions:</p>
+        <h2>How to Use</h2>
         <ol>
-            <li>Select a color from the palette.</li>
-            <li>Enter your username.</li>
-            <li>Click on the grid to place a pixel.</li>
-            <li>To post an announcement, type your message and click 'Post Announcement'.</li>
-            <li>View real-time pixel placement and announcements on the screen.</li>
+            <li class="instruction-step">Select a color from the palette.</li>
+            <li class="instruction-step">Enter your username.</li>
+            <li class="instruction-step">Click on the grid to place a pixel.</li>
+            <li class="instruction-step">To post an announcement, type your message in the textbox and click 'Post Announcement'.</li>
+            <li class="instruction-step">View real-time pixel placement updates and announcements on the screen.</li>
         </ol>
     </div>
     <div id="controls">
@@ -147,8 +167,9 @@
         <input type="number" id="timerDuration" value="300" />
         <button id="setTimerButton">Set Timer</button>
         <button id="toggleTimerPosition">Toggle Timer Position</button>
-        <textarea id="announcement" placeholder="Type your announcement here..."></textarea>
-        <button id="postAnnouncementButton">Post Announcement</button>
+        <label for="userLimit">Set User Limit: </label>
+        <input type="number" id="userLimit" min="1" value="5" />
+        <button id="setUserLimitButton">Set User Limit</button>
         <button id="closeAdminPanel">Close Admin Panel</button>
         <div id="userLogs"></div>
         <div id="warningDisplay" style="color: red; font-weight: bold;"></div>
@@ -189,8 +210,6 @@
                     lastPixel = { pixel, color: selectedColor }; // Track the last pixel
                     startTimer();
                     updateAnnouncementDisplay(`${username} placed a pixel at index ${index} with color ${selectedColor}`);
-                    // Simulate real-time update (in real applications, use WebSockets here)
-                    // socket.emit('pixelUpdate', {username, index, selectedColor});
                 } else {
                     alert('Please choose a color before placing a pixel!');
                 }
@@ -202,11 +221,11 @@
         function startTimer() {
             canPlacePixel = false;
             timerDisplay.textContent = `Time until you can place the next pixel: ${formatTime(timerDuration)}`;
-            
+
             const timerInterval = setInterval(() => {
                 timerDuration--;
                 timerDisplay.textContent = `Time until you can place the next pixel: ${formatTime(timerDuration)}`;
-
+                
                 if (timerDuration <= 0) {
                     clearInterval(timerInterval);
                     canPlacePixel = true;
@@ -282,6 +301,16 @@
             }
         });
 
+        document.getElementById('setUserLimitButton').addEventListener('click', function() {
+            const limit = parseInt(document.getElementById('userLimit').value, 10);
+            if (!isNaN(limit) && limit > 0) {
+                alert(`User placement limit set to ${limit}.`);
+                // Implement user limit logic if needed
+            } else {
+                alert('Please enter a valid user limit.');
+            }
+        });
+
         document.getElementById('closeAdminPanel').addEventListener('click', function() {
             adminPanel.style.display = 'none';
         });
@@ -299,8 +328,12 @@
         // Post Announcements
         document.getElementById('postAnnouncementButton').addEventListener('click', function() {
             const announcementText = document.getElementById('announcement').value;
-            updateAnnouncementDisplay(announcementText);
-            document.getElementById('announcement').value = ""; // Clear the text area
+            if (announcementText) {
+                updateAnnouncementDisplay(announcementText);
+                document.getElementById('announcement').value = ""; // Clear the text area
+            } else {
+                alert("Please enter an announcement.");
+            }
         });
 
         // Function to update announcements on the screen
@@ -308,6 +341,9 @@
             const announcementDisplay = document.getElementById('announcementDisplay');
             announcementDisplay.textContent = message;
             announcementDisplay.style.display = 'block'; // Show announcement
+            setTimeout(() => {
+                announcementDisplay.style.display = 'none'; // Hide after 5 seconds
+            }, 5000);
         }
 
         // Admin access via console
