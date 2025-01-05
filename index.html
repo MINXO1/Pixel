@@ -31,6 +31,7 @@
             transition: transform 0.2s; /* Smooth zoom effect */
             touch-action: none; /* Prevents touch actions like scrolling */
             position: absolute; /* Allowing positioning for drag functionality */
+            transform: scale(0.1); /* Start zoomed out */
         }
         .pixel {
             width: 20px;
@@ -81,6 +82,14 @@
         .selected {
             border: 2px solid #000; /* Highlight selected color */
         }
+        #announcement {
+            margin-top: 10px;
+            width: 100%;
+            min-height: 50px;
+            border: 1px solid #ccc;
+            padding: 5px;
+            resize: none; /* Prevent resizing */
+        }
     </style>
 </head>
 <body>
@@ -109,13 +118,19 @@
         <button id="showUsersButton">Show User Pixels</button>
         <button id="resetAllPixelsButton">Reset All Pixels</button>
         <button id="deletePixelButton">Delete Last Pixel</button>
+        <button id="togglePixelPlacement">Disable Pixel Placement</button>
         <label for="timerDuration">Set Timer (secs): </label>
         <input type="number" id="timerDuration" value="300" />
         <button id="setTimerButton">Set Timer</button>
         <button id="toggleTimerPosition">Toggle Timer Position</button>
+        <textarea id="announcement" placeholder="Type your announcement here..."></textarea>
+        <button id="postAnnouncementButton">Post Announcement</button>
         <button id="closeAdminPanel">Close Admin Panel</button>
         <div id="userLogs"></div>
+        <div id="warningDisplay" style="color: red; font-weight: bold;"></div>
     </div>
+
+    <div id="announcementDisplay" style="margin-top: 20px; font-size: 18px; font-weight: bold;"></div>
 
     <script>
         const gridSize = 200; // 200x200 grid
@@ -127,7 +142,7 @@
         let canPlacePixel = true;
         let timerDuration = 300; // default 5 minutes in seconds
         let lastPixel = null; // to track last pixel placed
-        let scale = 1;
+        let scale = 0.1; // Initial scale for zoomed-out state
         let isDragging = false;
         let startX = 0, startY = 0, initialX = 0, initialY = 0;
 
@@ -155,7 +170,7 @@
                     alert('Please choose a color before placing a pixel!');
                 }
             } else {
-                alert('You cannot place another pixel yet! Wait for the timer to finish.');
+                alert('You cannot place another pixel yet! Wait for the timer to finish or the admin to enable pixel placement.');
             }
         }
 
@@ -170,7 +185,7 @@
                 if (timerDuration <= 0) {
                     clearInterval(timerInterval);
                     canPlacePixel = true;
-                    timerDuration = 300; // reset timer to default
+                    timerDuration = 300; // Reset timer to default
                     timerDisplay.textContent = "You can place a pixel again!";
                 }
             }, 1000);
@@ -243,6 +258,23 @@
             adminPanel.style.display = 'none';
         });
 
+        // Toggle pixel placement
+        let pixelPlacementEnabled = true;
+        document.getElementById('togglePixelPlacement').addEventListener('click', function() {
+            pixelPlacementEnabled = !pixelPlacementEnabled;
+            canPlacePixel = pixelPlacementEnabled;
+            const buttonText = pixelPlacementEnabled ? "Disable Pixel Placement" : "Enable Pixel Placement";
+            this.textContent = buttonText;
+            document.getElementById('warningDisplay').textContent = pixelPlacementEnabled ? "" : "Pixel placement is currently disabled!";
+        });
+
+        // Post Announcements
+        document.getElementById('postAnnouncementButton').addEventListener('click', function() {
+            const announcementText = document.getElementById('announcement').value;
+            document.getElementById('announcementDisplay').textContent = announcementText;
+            document.getElementById('announcement').value = ""; // Clear the text area
+        });
+
         // Admin access via console
         window.addEventListener('keydown', function(event) {
             if (event.ctrlKey && event.key === 'm') { // Trigger admin access with Ctrl + M
@@ -279,7 +311,7 @@
             if (event.deltaY < 0) {
                 scale += 0.1;
             } else {
-                scale = Math.max(1, scale - 0.1); // Prevent zooming out too much
+                scale = Math.max(0.1, scale - 0.1); // Prevent zooming out too much
             }
             canvas.style.transform = `scale(${scale})`; // Apply zoom
         });
