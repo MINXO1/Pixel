@@ -14,11 +14,14 @@
             justify-content: center;
             height: 100vh;
             margin: 0;
+            padding: 20px; /* Add some padding */
+            box-sizing: border-box; /* Ensure padding doesn't affect total height */
         }
 
         h1 {
             color: #ff4500;
             margin-bottom: 20px;
+            text-align: center; /* Center the title */
         }
 
         #canvasContainer {
@@ -26,8 +29,10 @@
             overflow: hidden;
             position: relative;
             width: 100%;
-            height: 80vh;
+            height: auto; /* Let height adjust with screen size */
+            max-height: 80vh;
             border: 2px solid #ccc;
+            flex-direction: column; /* Allow keyboard navigation */
         }
 
         #canvas {
@@ -35,6 +40,7 @@
             grid-template-columns: repeat(100, 20px); /* 100x100 grid */
             gap: 1px;
             transform-origin: 0 0; /* Set the origin for scaling */
+            flex-grow: 1; /* Allow canvas to grow */
         }
 
         .pixel {
@@ -50,9 +56,10 @@
         }
 
         .color-palette {
-            margin: 20px;
+            margin: 20px 0;
             display: flex;
             gap: 10px;
+            justify-content: center; /* Center color palette */
         }
 
         .color {
@@ -74,6 +81,7 @@
             color: white;
             border: none;
             cursor: pointer;
+            width: 100%; /* Full-width button */
         }
 
         #submit:disabled {
@@ -85,23 +93,25 @@
             margin-top: 20px;
             font-size: 16px;
             color: green;
+            text-align: center; /* Center announcements */
         }
 
         /* Admin panel styles */
         #adminPanel {
             display: none;
             position: fixed;
-            top: 20%;
+            top: 10%;
             left: 50%;
-            transform: translate(-50%, -50%);
+            transform: translate(-50%, -10%);
             background-color: white;
             border: 2px solid #ff4500;
             padding: 20px;
             z-index: 1000; /* Show above everything else */
-            width: 300px;
+            width: 90%; /* Responsive width */
+            max-width: 400px; /* Max width for larger screens */
             height: auto;
             overflow-y: auto;
-            max-height: 60vh; /* Limit height for the panel */
+            max-height: 70vh; /* Limit height for the panel */
         }
 
         #adminPanel input {
@@ -117,16 +127,25 @@
             padding: 5px 10px;
             cursor: pointer;
             margin-bottom: 10px; /* Space between buttons */
+            width: 100%; /* Full-width buttons */
         }
 
         #adminPanel div {
             margin-bottom: 10px; /* Space between sections */
         }
+
+        #adminAnnouncements {
+            margin-top: 10px;
+            color: blue; /* Color for admin announcements */
+            font-size: 14px; /* Slightly smaller font size */
+            max-height: 150px; /* Limit height of announcements */
+            overflow-y: auto; /* Allow scrolling */
+        }
     </style>
 </head>
 <body>
     <h1>Crimson Pixel</h1>
-    
+
     <div class="color-palette">
         <div class="color" style="background-color: #FF0000;" data-color="#FF0000"></div>
         <div class="color" style="background-color: #00FF00;" data-color="#00FF00"></div>
@@ -135,7 +154,7 @@
         <div class="color" style="background-color: #FF00FF;" data-color="#FF00FF"></div>
         <div class="color" style="background-color: #00FFFF;" data-color="#00FFFF"></div>
     </div>
-    
+
     <button id="submit" disabled>Place Pixel</button>
     <div id="announcement"></div>
 
@@ -172,6 +191,7 @@
             <button id="resetAll">Reset All Settings</button>
             <button id="toggleAdminMenu">Toggle Admin Menu</button>
         </div>
+        <div id="adminAnnouncements"></div> <!-- Announcements area -->
     </div>
 
     <script>
@@ -244,33 +264,46 @@
         const adminLoginButton = document.getElementById('adminLogin');
         const adminMessage = document.getElementById('adminMessage');
         const adminOptions = document.getElementById('adminOptions');
-        
+
         adminLoginButton.addEventListener('click', () => {
             const enteredPassword = adminPasswordInput.value;
             if (enteredPassword === 'minxex') {
                 adminMessage.textContent = 'Access granted!'; 
                 adminMessage.style.color = 'green';
                 adminOptions.style.display = 'block'; // Show admin options
+                updateAdminAnnouncement('Admin features are now accessible.'); // Add admin announcement
             } else {
                 adminMessage.textContent = 'Incorrect password!';
             }
         });
 
+        // Function to display admin announcements
+        function updateAdminAnnouncement(text) {
+            const adminAnnouncements = document.getElementById('adminAnnouncements');
+            const announcement = document.createElement('div');
+            announcement.textContent = text;
+            adminAnnouncements.appendChild(announcement);
+            setTimeout(() => {
+                adminAnnouncements.removeChild(announcement);
+            }, 8000); // Remove after 8 seconds
+        }
+
+        // Admin functionalities
         document.getElementById('clearCanvas').onclick = function() {
             pixels.forEach(pixel => pixel.style.backgroundColor = 'white');
-            updateAnnouncement('Canvas cleared!');
+            updateAdminAnnouncement('Canvas cleared!');
         };
 
         document.getElementById('resetColors').onclick = function() {
             pixels.forEach(pixel => pixel.style.backgroundColor = 'white');
-            updateAnnouncement('Colors reset to default!');
+            updateAdminAnnouncement('Colors reset to default!');
         };
 
         document.getElementById('removePixel').onclick = function() {
             const index = prompt('Enter the pixel index to remove (0 to 9999):');
             if (index >= 0 && index < pixels.length) {
                 pixels[index].style.backgroundColor = 'white';
-                updateAnnouncement(`Pixel at index ${index} removed!`);
+                updateAdminAnnouncement(`Pixel at index ${index} removed!`);
             } else {
                 alert('Invalid index!');
             }
@@ -280,7 +313,7 @@
             const fillColor = prompt('Enter a color to fill all pixels (e.g., #FF00FF):');
             if (fillColor) {
                 pixels.forEach(pixel => pixel.style.backgroundColor = fillColor);
-                updateAnnouncement(`All pixels filled with color ${fillColor}!`);
+                updateAdminAnnouncement(`All pixels filled with color ${fillColor}!`);
             }
         };
 
@@ -289,7 +322,7 @@
                 const randomColor = '#' + Math.floor(Math.random()*16777215).toString(16); // Random hex color
                 pixel.style.backgroundColor = randomColor;
             });
-            updateAnnouncement('All pixels randomized!');
+            updateAdminAnnouncement('All pixels randomized!');
         };
 
         document.getElementById('setGridSize').onclick = function() {
@@ -309,7 +342,7 @@
                     pixels.push(pixel);
                 }
                 canvas.style.gridTemplateColumns = `repeat(${newSize}, 20px)`; // Update grid size
-                updateAnnouncement(`Grid size updated to ${newSize}x${newSize}!`);
+                updateAdminAnnouncement(`Grid size updated to ${newSize}x${newSize}!`);
             } else {
                 alert('Invalid size!');
             }
@@ -321,7 +354,7 @@
                 data.push(pixel.style.backgroundColor || 'white');
             });
             localStorage.setItem('pixelData', JSON.stringify(data));
-            updateAnnouncement('Canvas saved!');
+            updateAdminAnnouncement('Canvas saved!');
         };
 
         document.getElementById('loadCanvas').onclick = function() {
@@ -330,7 +363,7 @@
                 data.forEach((color, index) => {
                     pixels[index].style.backgroundColor = color;
                 });
-                updateAnnouncement('Canvas loaded!');
+                updateAdminAnnouncement('Canvas loaded!');
             } else {
                 alert('No saved canvas found!');
             }
@@ -338,17 +371,17 @@
 
         document.getElementById('showPixelCount').onclick = function() {
             const filledPixels = pixels.filter(pixel => pixel.style.backgroundColor !== 'white').length;
-            updateAnnouncement(`Total filled pixels: ${filledPixels}`);
+            updateAdminAnnouncement(`Total filled pixels: ${filledPixels}`);
         };
 
         document.getElementById('lockCanvas').onclick = function() {
             isCanvasLocked = true;
-            updateAnnouncement('Canvas is locked for editing.');
+            updateAdminAnnouncement('Canvas is locked for editing.');
         };
 
         document.getElementById('unlockCanvas').onclick = function() {
             isCanvasLocked = false;
-            updateAnnouncement('Canvas is unlocked for editing.');
+            updateAdminAnnouncement('Canvas is unlocked for editing.');
         };
 
         document.getElementById('toggleGrid').onclick = function() {
@@ -356,13 +389,15 @@
             pixelElements.forEach(pixel => {
                 pixel.style.border = (pixel.style.border === '1px solid rgba(0, 0, 0, 0.2)') ? 'none' : '1px solid rgba(0, 0, 0, 0.2)';
             });
-            updateAnnouncement('Grid lines toggled.');
+            updateAdminAnnouncement('Grid lines toggled.');
         };
 
         document.getElementById('clearAnnouncements').onclick = function() {
-            const announcement = document.getElementById('announcement');
-            announcement.textContent = '';
-            updateAnnouncement('Announcements cleared!');
+            const adminAnnouncements = document.getElementById('adminAnnouncements');
+            while (adminAnnouncements.firstChild) {
+                adminAnnouncements.removeChild(adminAnnouncements.firstChild);
+            }
+            updateAdminAnnouncement('Announcements cleared!');
         };
 
         document.getElementById('setDefaultColors').onclick = function() {
@@ -370,7 +405,7 @@
             pixels.forEach((pixel, index) => {
                 pixel.style.backgroundColor = defaultColors[index % defaultColors.length];
             });
-            updateAnnouncement('Set default colors applied!');
+            updateAdminAnnouncement('Set default colors applied!');
         };
 
         document.getElementById('exportToImage').onclick = function() {
@@ -391,7 +426,7 @@
             link.download = 'canvas.png';
             link.href = exportCanvas.toDataURL();
             link.click();
-            updateAnnouncement('Canvas exported as image!');
+            updateAdminAnnouncement('Canvas exported as image!');
         };
 
         document.getElementById('importFromImage').onclick = function() {
@@ -419,7 +454,7 @@
                             const rgba = `rgba(${imageData.data[index]}, ${imageData.data[index + 1]}, ${imageData.data[index + 2]}, ${imageData.data[index + 3]})`;
                             pixels[i].style.backgroundColor = rgba; // Set pixel color
                         }
-                        updateAnnouncement('Canvas imported from image!');
+                        updateAdminAnnouncement('Canvas imported from image!');
                     };
                 };
                 reader.readAsDataURL(file);
@@ -431,7 +466,7 @@
             const newColor = prompt('Enter new background color (e.g., #FFFFFF):');
             if (newColor) {
                 canvasContainer.style.backgroundColor = newColor;
-                updateAnnouncement(`Background color changed to ${newColor}!`);
+                updateAdminAnnouncement(`Background color changed to ${newColor}!`);
             }
         };
 
@@ -469,7 +504,7 @@
                 canvas.appendChild(pixel);
                 pixels.push(pixel);
             }
-            updateAnnouncement('All settings have been reset to default values!');
+            updateAdminAnnouncement('All settings have been reset to default values!');
         };
 
         // Open admin panel with Ctrl + M
