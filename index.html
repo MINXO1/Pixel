@@ -3,468 +3,174 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pixel Art Maker with Admin Panel</title>
+    <title>r/place Clone</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
-            background-color: #e0e0e0;
+            background-color: #f0f0f0;
             display: flex;
             flex-direction: column;
             align-items: center;
-            overflow: hidden; /* Prevents scrolling when zooming */
-        }
-        h1 {
-            margin: 20px;
-            color: #007BFF;
-            font-size: 36px;
-            text-align: center;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
-        }
-        #instructions {
-            margin: 20px;
-            font-size: 18px;
-            color: #333;
-            text-align: center;
-            background-color: #fff;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-            padding: 20px;
-            transition: transform 0.2s; /* Smooth transition for hover effect */
-        }
-        #instructions:hover {
-            transform: scale(1.02); /* Slight zoom effect on hover */
-        }
-        #instructions h2 {
-            margin: 0 0 10px;
-            font-size: 24px;
-            color: #007BFF;
-        }
-        #instructions ol {
-            padding-left: 20px;
-            text-align: left;
-        }
-        .instruction-step {
-            margin: 5px 0;
-            color: #555;
-            font-size: 16px;
-        }
-        #canvasContainer {
-            position: relative;
-            overflow: hidden;
-            width: 100%;
-            height: 80vh; /* Responsive height */
-            display: flex;
             justify-content: center;
-            align-items: center;
-            border: 2px solid #007BFF; /* Add border for canvas container */
-            border-radius: 12px;
-            margin-bottom: 20px; /* Space below canvas */
+            height: 100vh;
+            margin: 0;
         }
-        #canvas {
+
+        h1 {
+            color: #ff4500;
+            margin-bottom: 20px;
+        }
+
+        #canvasContainer {
             display: grid;
-            grid-template-columns: repeat(120, 20px); /* Larger canvas: 120x120 */
-            grid-auto-rows: 20px;
-            position: absolute; /* Allowing positioning for drag functionality */
-            transform: scale(0.5); /* Reduced zoom out */
-            transform-origin: top left; /* Zoom from top left */
-            transition: transform 0.2s; /* Smooth zoom effect */
+            grid-template-columns: repeat(100, 20px); /* 100x100 grid */
+            gap: 1px;
+            border: 2px solid #ccc;
         }
+
         .pixel {
             width: 20px;
             height: 20px;
             background-color: white;
-            border: 1px solid #ddd;
-            transition: background-color 0.3s; /* Smooth color transition */
+            cursor: pointer;
+            transition: background-color 0.2s;
         }
+
         .pixel:hover {
-            border: 1px solid #aaa; /* Change border on hover */
+            border: 1px solid #aaa;
         }
-        #controls {
-            margin-top: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap; /* Allows wrapping on small screens */
-        }
-        #timer {
-            position: absolute;
-            font-size: 20px;
-            color: red;
-            padding: 10px;
-            z-index: 10; /* Above other elements */
-        }
-        #adminPanel {
-            display: none; /* Hidden by default */
-            background-color: white;
-            border: 1px solid #ccc;
-            border-radius: 12px;
-            padding: 20px;
-            position: fixed;
-            top: 50px;
-            left: 50px;
-            z-index: 1000;
-            max-height: 80%;
-            overflow-y: auto;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        }
-        #adminPanel input, #adminPanel select {
-            width: auto; /* Width as per content */
-            min-width: 100px; /* Minimum width for usability */
-            padding: 5px; /* Padding for better appearance */
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            transition: border 0.3s; /* Smooth border color change */
-        }
-        #adminPanel input:focus {
-            border-color: #007BFF; /* Highlight border on focus */
-            outline: none; /* Remove default outline */
-        }
+
         .color-palette {
+            margin: 20px;
             display: flex;
+            gap: 10px;
         }
-        .palette-color {
+
+        .color {
             width: 30px;
             height: 30px;
+            border-radius: 3px;
+            border: 2px solid transparent;
             cursor: pointer;
-            border: 1px solid #ddd;
-            margin-right: 2px;
-            transition: transform 0.2s; /* Smooth transform effect */
         }
-        .palette-color:hover {
-            transform: scale(1.1); /* Slight zoom effect on hover */
-            border: 2px solid #007BFF; /* Highlight border on hover */
+
+        .color.selected {
+            border-color: #000;
         }
-        .selected {
-            border: 2px solid #000; /* Highlight selected color */
-        }
-        #announcement {
+
+        #username {
             margin-top: 10px;
-            width: 100%;
-            min-height: 50px;
-            border: 1px solid #ccc;
             padding: 5px;
-            resize: none; /* Prevent resizing */
         }
-        #announcementDisplay {
-            margin-top: 20px; 
-            font-size: 18px; 
-            font-weight: bold; 
-            color: green; /* Color for better visibility */
-            display: none; /* Hidden by default */
-        }
-        .button {
-            padding: 10px 15px;
+
+        #submit {
+            margin-top: 10px;
+            padding: 5px 10px;
+            background: #ff4500;
             color: white;
-            background-color: #007BFF;
             border: none;
-            border-radius: 5px;
             cursor: pointer;
-            transition: background-color 0.3s; /* Smooth background color transition */
         }
-        .button:hover {
-            background-color: #0056b3; /* Darker shade on hover */
+
+        #submit:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        #announcement {
+            margin-top: 20px;
+            font-size: 16px;
+            color: green;
         }
     </style>
 </head>
 <body>
-    <h1>Pixel Art Maker</h1>
-    <div id="instructions">
-        <h2>How to Use</h2>
-        <ol>
-            <li class="instruction-step">Select a color from the palette.</li>
-            <li class="instruction-step">Enter your username.</li>
-            <li class="instruction-step">Click on the grid to place a pixel.</li>
-            <li class="instruction-step">View real-time pixel placement updates on the screen.</li>
-        </ol>
+    <h1>r/place Clone</h1>
+    <input type="text" id="username" placeholder="Enter username" />
+    <div class="color-palette">
+        <div class="color" style="background-color: #FF0000;" data-color="#FF0000"></div>
+        <div class="color" style="background-color: #00FF00;" data-color="#00FF00"></div>
+        <div class="color" style="background-color: #0000FF;" data-color="#0000FF"></div>
+        <div class="color" style="background-color: #FFFF00;" data-color="#FFFF00"></div>
+        <div class="color" style="background-color: #FF00FF;" data-color="#FF00FF"></div>
+        <div class="color" style="background-color: #00FFFF;" data-color="#00FFFF"></div>
     </div>
+    <button id="submit" disabled>Place Pixel</button>
+    <div id="announcement"></div>
 
-    <div id="controls">
-        <div class="color-palette">
-            <div class="palette-color" style="background-color: #FF0000;" data-color="#FF0000"></div>
-            <div class="palette-color" style="background-color: #00FF00;" data-color="#00FF00"></div>
-            <div class="palette-color" style="background-color: #0000FF;" data-color="#0000FF"></div>
-            <div class="palette-color" style="background-color: #FFFF00;" data-color="#FFFF00"></div>
-            <div class="palette-color" style="background-color: #FF00FF;" data-color="#FF00FF"></div>
-            <div class="palette-color" style="background-color: #00FFFF;" data-color="#00FFFF"></div>
-        </div>
-        <button class="button" id="resetButton">Reset Canvas</button>
-        <label for="username">Username: </label>
-        <input type="text" id="username" placeholder="Enter username" />
-        <button class="button" id="lockColorButton">Lock Color</button> 
-    </div>
-    
-    <div id="canvasContainer">
-        <div id="timer"></div>
-        <div id="canvas"></div>
-    </div>
-
-    <div id="announcementDisplay"></div> <!-- Display announcements here -->
-
-    <div id="adminPanel">
-        <h2>Admin Panel</h2>
-        <button class="button" id="showUsersButton">Show User Pixels</button>
-        <button class="button" id="resetAllPixelsButton">Reset All Pixels</button>
-        <button class="button" id="deletePixelButton">Delete Last Pixel</button>
-        <button class="button" id="togglePixelPlacement">Disable Pixel Placement</button>
-        <label for="timerDuration">Set Timer (secs): </label>
-        <input type="number" id="timerDuration" value="300" />
-        <button class="button" id="setTimerButton">Set Timer</button>
-        <label for="userLimit">Set User Limit: </label>
-        <input type="number" id="userLimit" min="1" value="5" />
-        <button class="button" id="setUserLimitButton">Set User Limit</button>
-        <button class="button" id="closeAdminPanel">Close Admin Panel</button>
-        <div id="userLogs"></div>
-        <div id="warningDisplay" style="color: red; font-weight: bold;"></div>
-    </div>
+    <div id="canvasContainer"></div>
 
     <script>
-        const gridSize = 120; // 120x120 grid (larger canvas)
-        const canvas = document.getElementById('canvas');
-        const timerDisplay = document.getElementById('timer');
-        const usernameInput = document.getElementById('username');
-        const adminPanel = document.getElementById('adminPanel');
-        const pixelsLog = [];
-        let canPlacePixel = true;
-        let timerDuration = 300; // default 5 minutes in seconds
-        let lastPixel = null; // to track last pixel placed
-        let scale = 0.5; // Scaling factor for zoom
-        let isDragging = false;
-        let startX = 0, startY = 0, initialX = 0, initialY = 0;
+        // Set up the grid
+        const canvasContainer = document.getElementById('canvasContainer');
+        const pixels = [];
+        const gridSize = 100; // 100x100 grid
+        let selectedColor = '#FF0000'; // Default color for drawing
+        let username = '';
 
-        // Create the grid
         for (let i = 0; i < gridSize * gridSize; i++) {
             const pixel = document.createElement('div');
-            pixel.classList.add('pixel');
-            pixel.addEventListener('click', function() {
-                placePixel(pixel, i);
+            pixel.className = 'pixel';
+            pixel.dataset.index = i; // Store index for reference
+            pixel.addEventListener('click', function () {
+                placePixel(i);
             });
-            canvas.appendChild(pixel);
+            canvasContainer.appendChild(pixel);
+            pixels.push(pixel);
         }
 
-        function placePixel(pixel, index) {
-            if (canPlacePixel) {
-                const username = usernameInput.value || 'Anonymous';
-                const selectedColor = document.querySelector('.palette-color.selected')?.getAttribute('data-color');
-
-                if (selectedColor) {
-                    pixel.style.backgroundColor = selectedColor;
-                    pixelsLog.push({username, index, color: selectedColor}); // Record the placement
-                    lastPixel = { pixel, color: selectedColor }; // Track the last pixel
-                    startTimer();
-                    updateAnnouncementDisplay(`${username} placed a pixel at index ${index} with color ${selectedColor}`);
-                } else {
-                    alert('Please choose a color before placing a pixel!');
-                }
-            } else {
-                alert('You cannot place another pixel yet! Wait for the timer to finish or the admin to enable pixel placement.');
-            }
-        }
-
-        function startTimer() {
-            canPlacePixel = false;
-            timerDisplay.textContent = `Time until you can place the next pixel: ${formatTime(timerDuration)}`;
-
-            const timerInterval = setInterval(() => {
-                timerDuration--;
-                timerDisplay.textContent = `Time until you can place the next pixel: ${formatTime(timerDuration)}`;
-                
-                if (timerDuration <= 0) {
-                    clearInterval(timerInterval);
-                    canPlacePixel = true;
-                    timerDuration = 300; // Reset timer to default
-                    timerDisplay.textContent = "You can place a pixel again!";
-                }
-            }, 1000);
-        }
-
-        function formatTime(seconds) {
-            const minutes = Math.floor(seconds / 60);
-            const secs = seconds % 60;
-            return `${minutes}m ${secs < 10 ? '0' : ''}${secs}s`;
-        }
-
-        // Reset Canvas
-        document.getElementById('resetButton').addEventListener('click', function() {
-            const pixels = document.querySelectorAll('.pixel');
-            pixels.forEach(pixel => {
-                pixel.style.backgroundColor = 'white';
-            });
-            pixelsLog.length = 0; // Reset user logs
-            updateAnnouncementDisplay("Canvas has been reset."); // Update announcement display
-        });
-
-        // Delete Last Placed Pixel
-        document.getElementById('deletePixelButton').addEventListener('click', function() {
-            if (lastPixel) {
-                lastPixel.pixel.style.backgroundColor = 'white'; // Remove color
-                pixelsLog.pop(); // Remove last log entry
-                lastPixel = null; // Reset last pixel
-                alert("Last pixel deleted!");
-                updateAnnouncementDisplay("Last pixel has been deleted."); // Update announcement display
-            } else {
-                alert("No pixels to delete!");
-            }
-        });
-
-        // Admin panel controls
-        document.getElementById('showUsersButton').addEventListener('click', function() {
-            console.log(pixelsLog); // Log the colors of the pixels to the console
-            alert('Check the console for user pixel placements.');
-            displayUserLogs();
-        });
-
-        document.getElementById('resetAllPixelsButton').addEventListener('click', function() {
-            const pixels = document.querySelectorAll('.pixel');
-            pixels.forEach(pixel => {
-                pixel.style.backgroundColor = 'white';
-            });
-            pixelsLog.length = 0; // Reset user logs
-            alert("All pixels have been reset!");
-            updateAnnouncementDisplay("All pixels have been reset."); // Update announcement display
-        });
-
-        document.getElementById('setTimerButton').addEventListener('click', function() {
-            const newDuration = parseInt(document.getElementById('timerDuration').value, 10);
-            if (!isNaN(newDuration) && newDuration > 0) {
-                timerDuration = newDuration;
-                alert(`Timer duration set to ${timerDuration} seconds.`);
-            } else {
-                alert('Please enter a valid timer duration.');
-            }
-        });
-
-        document.getElementById('setUserLimitButton').addEventListener('click', function() {
-            const limit = parseInt(document.getElementById('userLimit').value, 10);
-            if (!isNaN(limit) && limit > 0) {
-                alert(`User placement limit set to ${limit}.`);
-                // Implement user limit logic if needed
-            } else {
-                alert('Please enter a valid user limit.');
-            }
-        });
-
-        document.getElementById('closeAdminPanel').addEventListener('click', function() {
-            adminPanel.style.display = 'none';
-        });
-
-        // Toggle pixel placement
-        let pixelPlacementEnabled = true;
-        document.getElementById('togglePixelPlacement').addEventListener('click', function() {
-            pixelPlacementEnabled = !pixelPlacementEnabled;
-            canPlacePixel = pixelPlacementEnabled;
-            const buttonText = pixelPlacementEnabled ? "Disable Pixel Placement" : "Enable Pixel Placement";
-            this.textContent = buttonText;
-            document.getElementById('warningDisplay').textContent = pixelPlacementEnabled ? "" : "Pixel placement is currently disabled!";
-        });
-
-        // Post Announcements
-        document.getElementById('postAnnouncementButton').addEventListener('click', function() {
-            const announcementText = document.getElementById('announcement').value;
-            if (announcementText) {
-                updateAnnouncementDisplay(announcementText);
-                document.getElementById('announcement').value = ""; // Clear the text area
-            } else {
-                alert("Please enter an announcement.");
-            }
-        });
-
-        // Function to update announcements on the screen
-        function updateAnnouncementDisplay(message) {
-            const announcementDisplay = document.getElementById('announcementDisplay');
-            announcementDisplay.textContent = message;
-            announcementDisplay.style.display = 'block'; // Show announcement
-            setTimeout(() => {
-                announcementDisplay.style.display = 'none'; // Hide after 5 seconds
-            }, 5000);
-        }
-
-        // Admin access via console
-        window.addEventListener('keydown', function(event) {
-            if (event.ctrlKey && event.key === 'm') { // Trigger admin access with Ctrl + M
-                const adminCode = prompt("Enter admin code:");
-                if (adminCode === "minxex") {
-                    adminPanel.style.display = 'block'; // Show admin panel
-                } else {
-                    alert("Invalid admin code");
-                }
-            }
-        });
-
-        // Color palette event listeners
-        const paletteColors = document.querySelectorAll(".palette-color");
-        paletteColors.forEach(color => {
-            color.addEventListener('click', function() {
-                const selectedColor = this.getAttribute('data-color');
-                document.querySelector('.palette-color.selected')?.classList.remove('selected');
+        // Color selection
+        const colorElements = document.querySelectorAll('.color');
+        colorElements.forEach(color => {
+            color.addEventListener('click', function () {
+                document.querySelector('.color.selected')?.classList.remove('selected');
                 this.classList.add('selected');
+                selectedColor = this.dataset.color; // Set selected color
             });
         });
 
-        function displayUserLogs() {
-            let logs = '<h3>User Pixel Logs:</h3>';
-            for (const log of pixelsLog) {
-                logs += `<strong>${log.username}</strong> placed a pixel at index ${log.index} with color ${log.color}<br>`;
-            }
-            document.getElementById('userLogs').innerHTML = logs;
+        // Username input
+        const usernameInput = document.getElementById('username');
+        usernameInput.addEventListener('input', function() {
+            username = this.value;
+            validateSubmit();
+        });
+
+        // Enable/disable submit button based on username
+        function validateSubmit() {
+            document.getElementById('submit').disabled = !username || !selectedColor;
         }
 
-        // Zoom and Drag functionality
-        canvasContainer.addEventListener('wheel', (event) => {
-            event.preventDefault(); // Prevent default scroll behavior
-            if (event.deltaY < 0) {
-                scale += 0.1;
-            } else {
-                scale = Math.max(0.1, scale - 0.1); // Prevent zooming out too much
+        // Place pixel logic
+        let lastPlacementTime = 0;
+        const cooldownTime = 5000; // 5 seconds cooldown in milliseconds
+
+        function placePixel(index) {
+            const currentTime = Date.now();
+            if (currentTime - lastPlacementTime < cooldownTime) {
+                alert(`You must wait before placing another pixel!`);
+                return;
             }
-            canvas.style.transform = `scale(${scale})`; // Apply zoom
-        });
 
-        // Mouse dragging for desktop
-        canvasContainer.addEventListener('mousedown', (event) => {
-            isDragging = true;
-            startX = event.clientX;
-            startY = event.clientY;
-            initialX = canvas.offsetLeft;
-            initialY = canvas.offsetTop;
-        });
-
-        canvasContainer.addEventListener('mousemove', (event) => {
-            if (isDragging) {
-                const deltaX = event.clientX - startX;
-                const deltaY = event.clientY - startY;
-                canvas.style.left = `${initialX + deltaX}px`;
-                canvas.style.top = `${initialY + deltaY}px`;
+            if (!username) {
+                alert('Please enter a username!');
+                return;
             }
-        });
 
-        canvasContainer.addEventListener('mouseup', () => {
-            isDragging = false;
-        });
+            const pixel = pixels[index];
+            pixel.style.backgroundColor = selectedColor;
+            lastPlacementTime = currentTime; // Update last placement time
+            updateAnnouncement(`${username} placed a pixel at ${index} with color ${selectedColor}`);
+        }
 
-        // Touch dragging for mobile
-        canvasContainer.addEventListener('touchstart', (event) => {
-            isDragging = true;
-            startX = event.touches[0].clientX;
-            startY = event.touches[0].clientY;
-            initialX = canvas.offsetLeft;
-            initialY = canvas.offsetTop;
-        });
-
-        canvasContainer.addEventListener('touchmove', (event) => {
-            if (isDragging) {
-                const deltaX = event.touches[0].clientX - startX;
-                const deltaY = event.touches[0].clientY - startY;
-                canvas.style.left = `${initialX + deltaX}px`;
-                canvas.style.top = `${initialY + deltaY}px`;
-            }
-        });
-
-        canvasContainer.addEventListener('touchend', () => {
-            isDragging = false;
-        });
-
-        // Set default selected color on load
-        document.querySelector('.palette-color').classList.add('selected');
+        // Display announcement
+        function updateAnnouncement(text) {
+            const announcement = document.getElementById('announcement');
+            announcement.textContent = text;
+            setTimeout(() => {
+                announcement.textContent = '';
+            }, 5000); // Hide announcement after 5 seconds
+        }
     </script>
 </body>
 </html>
