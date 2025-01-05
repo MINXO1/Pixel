@@ -30,6 +30,7 @@
             transform-origin: top left; /* Zoom from top left */
             transition: transform 0.2s; /* Smooth zoom effect */
             touch-action: none; /* Prevents touch actions like scrolling */
+            position: absolute; /* Allowing positioning for drag functionality */
         }
         .pixel {
             width: 20px;
@@ -45,9 +46,11 @@
             flex-wrap: wrap; /* Allows wrapping on small screens */
         }
         #timer {
-            margin-top: 20px;
+            position: absolute;
             font-size: 20px;
             color: red;
+            padding: 10px;
+            z-index: 10; /* Above other elements */
         }
         #adminPanel {
             display: none; /* Hidden by default */
@@ -97,9 +100,9 @@
         <button id="lockColorButton">Lock Color</button> 
     </div>
     <div id="canvasContainer">
+        <div id="timer"></div>
         <div id="canvas"></div>
     </div>
-    <div id="timer"></div>
 
     <div id="adminPanel">
         <h2>Admin Panel</h2>
@@ -109,6 +112,7 @@
         <label for="timerDuration">Set Timer (secs): </label>
         <input type="number" id="timerDuration" value="300" />
         <button id="setTimerButton">Set Timer</button>
+        <button id="toggleTimerPosition">Toggle Timer Position</button>
         <button id="closeAdminPanel">Close Admin Panel</button>
         <div id="userLogs"></div>
     </div>
@@ -123,6 +127,9 @@
         let canPlacePixel = true;
         let timerDuration = 300; // default 5 minutes in seconds
         let lastPixel = null; // to track last pixel placed
+        let scale = 1;
+        let isDragging = false;
+        let startX = 0, startY = 0, initialX = 0, initialY = 0;
 
         // Create the grid
         for (let i = 0; i < gridSize * gridSize; i++) {
@@ -222,6 +229,16 @@
             }
         });
 
+        document.getElementById('toggleTimerPosition').addEventListener('click', function() {
+            if (timerDisplay.style.top === "0") {
+                timerDisplay.style.top = "auto";
+                timerDisplay.style.bottom = "10px";
+            } else {
+                timerDisplay.style.top = "0";
+                timerDisplay.style.bottom = "auto";
+            }
+        });
+
         document.getElementById('closeAdminPanel').addEventListener('click', function() {
             adminPanel.style.display = 'none';
         });
@@ -256,23 +273,63 @@
             document.getElementById('userLogs').innerHTML = logs;
         }
 
-        // Zoom functionality
-        let scale = 1;
-        const zoomStep = 0.1;
-
+        // Zoom and Drag functionality
         canvasContainer.addEventListener('wheel', (event) => {
             event.preventDefault(); // Prevent default scroll behavior
             if (event.deltaY < 0) {
-                scale += zoomStep;
+                scale += 0.1;
             } else {
-                scale = Math.max(1, scale - zoomStep); // Prevent zooming out too much
+                scale = Math.max(1, scale - 0.1); // Prevent zooming out too much
             }
             canvas.style.transform = `scale(${scale})`; // Apply zoom
         });
 
+        // Mouse dragging for desktop
+        canvasContainer.addEventListener('mousedown', (event) => {
+            isDragging = true;
+            startX = event.clientX;
+            startY = event.clientY;
+            initialX = canvas.offsetLeft;
+            initialY = canvas.offsetTop;
+        });
+
+        canvasContainer.addEventListener('mousemove', (event) => {
+            if (isDragging) {
+                const deltaX = event.clientX - startX;
+                const deltaY = event.clientY - startY;
+                canvas.style.left = `${initialX + deltaX}px`;
+                canvas.style.top = `${initialY + deltaY}px`;
+            }
+        });
+
+        canvasContainer.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        // Touch dragging for mobile
+        canvasContainer.addEventListener('touchstart', (event) => {
+            isDragging = true;
+            startX = event.touches[0].clientX;
+            startY = event.touches[0].clientY;
+            initialX = canvas.offsetLeft;
+            initialY = canvas.offsetTop;
+        });
+
+        canvasContainer.addEventListener('touchmove', (event) => {
+            if (isDragging) {
+                const deltaX = event.touches[0].clientX - startX;
+                const deltaY = event.touches[0].clientY - startY;
+                canvas.style.left = `${initialX + deltaX}px`;
+                canvas.style.top = `${initialY + deltaY}px`;
+            }
+        });
+
+        canvasContainer.addEventListener('touchend', () => {
+            isDragging = false;
+        });
+
         // Set default selected color on load
         document.querySelector('.palette-color').classList.add('selected');
-
     </script>
 </body>
 </html>
