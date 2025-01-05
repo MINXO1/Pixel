@@ -34,8 +34,8 @@
             position: relative;
             overflow: hidden; 
             width: 100%;
-            max-width: 90vw; /* Responsive width */
-            height: 90vh; /* Responsive height */
+            max-width: 90vw; 
+            height: 90vh; 
             display: flex;
             justify-content: center;
             align-items: center;
@@ -46,28 +46,28 @@
         }
         #canvas {
             display: grid;
-            grid-template-columns: repeat(120, 20px); /* Larger canvas: 120x120 */
+            grid-template-columns: repeat(120, 20px); 
             grid-auto-rows: 20px;
-            touch-action: none; /* Prevents touch actions like scrolling */
-            position: absolute; /* Allowing positioning for drag functionality */
-            transform: scale(0.2); /* Reduce zoom out */
+            touch-action: none; 
+            position: absolute; 
+            transform: scale(0.2); 
             cursor: pointer;
-            user-select: none; /* Prevent text selection during mouse drag */
-            transition: transform 0.2s; /* Smooth zoom effect */
+            user-select: none; 
+            transition: transform 0.2s; 
         }
         .pixel {
             width: 20px;
             height: 20px;
             background-color: white;
             border: 1px solid #ddd;
-            box-sizing: border-box; /* Include padding and border in height/width */
+            box-sizing: border-box; 
         }
         #controls {
             margin-top: 20px;
             display: flex;
             align-items: center;
             gap: 10px;
-            flex-wrap: wrap; /* Allows wrapping on small screens */
+            flex-wrap: wrap; 
         }
         .color-palette {
             display: flex;
@@ -82,31 +82,31 @@
             transition: border 0.3s;
         }
         .palette-color:hover {
-            border: 2px solid #000; /* Highlight color on hover */
+            border: 2px solid #000; 
         }
         .selected {
-            border: 2px solid #000; /* Highlight selected color */
+            border: 2px solid #000; 
         }
         #announcementDisplay {
             margin-top: 20px; 
             font-size: 1rem; 
             font-weight: bold; 
-            color: green; /* Color for better visibility */
-            display: none; /* Hidden by default */
+            color: green; 
+            display: none; 
         }
         #adminPanel {
-            display: none; /* Hidden by default */
+            display: none; 
             position: fixed;
             background-color: white;
             border: 1px solid #ccc;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
             padding: 15px;
-            top: 20%;
+            top: 10%;
             left: 5%;
             max-width: 300px;
             overflow-y: auto;
-            max-height: 70vh; /* Responsive height */
+            max-height: 70vh; 
         }
         button {
             padding: 10px 15px;
@@ -123,13 +123,6 @@
         }
         button:active {
             transform: translateY(0);
-        }
-        #toggleDarkModeButton {
-            background-color: #222;
-            color: #fff;
-        }
-        #toggleDarkModeButton:hover {
-            background-color: #444;
         }
     </style>
 </head>
@@ -157,25 +150,40 @@
         <input type="text" id="username" placeholder="Enter username" />
     </div>
     <div id="canvasContainer">
-        <div id="announcementDisplay"></div> <!-- Display announcements here -->
+        <div id="announcementDisplay"></div>
         <div id="canvas"></div>
     </div>
 
     <div id="adminPanel">
         <h2>Admin Panel</h2>
+        <button id="viewActiveUsersButton">View Active Users</button>
+        <button id="banUserButton">Ban/Unban User</button>
+        <button id="viewPixelLogsButton">View Pixel Logs</button>
+        <button id="clearAllPixelsButton">Clear All Pixels</button>
+        <button id="resetUserPixelsButton">Reset User Pixels</button>
+        <label for="setPixelLimit">Set Pixel Limit:</label>
+        <input type="number" id="setPixelLimit" value="10" min="1" />
+        <button id="applyPixelLimitButton">Apply Limit</button>
+        <button id="togglePixelPlacementButton">Enable/Disable Pixel Placement</button>
+        <button id="userStatsButton">View User Statistics</button>
+        <button id="exportPixelDataButton">Export Pixel Data</button>
+        <button id="importPixelDataButton">Import Pixel Data</button>
+        <button id="toggleDarkMode">Toggle Dark Mode</button>
+        <button id="postAnnouncementButton">Post Global Announcement</button>
+        <button id="setCanvasSizeButton">Set Canvas Size</button>
         <button id="closeAdminPanelButton">Close Admin Panel</button>
-        <!-- Additional admin functionalities would go here -->
+
+        <div id="userActionLog" style="margin-top: 10px;"></div>
     </div>
 
     <script>
-        const gridSize = 120; // 120x120 grid (larger canvas)
+        const gridSize = 120; 
         const canvas = document.getElementById('canvas');
         const usernameInput = document.getElementById('username');
         const announcementDisplay = document.getElementById('announcementDisplay');
         let canPlacePixel = true;
-        let scale = 0.2; // Initial zoom level
-        let isDragging = false;
-        let startX = 0, startY = 0, initialX = 0, initialY = 0;
+        let pixelLimit = 10; // Default pixel limit per user
+        let activeUsers = {};
 
         // Create the grid
         for (let i = 0; i < gridSize * gridSize; i++) {
@@ -189,23 +197,39 @@
 
         // Function to place pixel
         function placePixel(pixel) {
-            if (canPlacePixel) {
-                const username = usernameInput.value || 'Anonymous';
-                const selectedColor = document.querySelector('.palette-color.selected')?.getAttribute('data-color');
+            const username = usernameInput.value || 'Anonymous';
+            const selectedColor = document.querySelector('.palette-color.selected')?.getAttribute('data-color');
 
+            if (canPlacePixel && (activeUsers[username]?.count < pixelLimit || !activeUsers[username])) {
                 if (selectedColor) {
                     pixel.style.backgroundColor = selectedColor;
-                    updateAnnouncementDisplay(`${username} placed a pixel with color ${selectedColor}`);
+
+                    // Log pixel placement
+                    logUserAction(`${username} placed a pixel with color ${selectedColor}.`);
+                    if (activeUsers[username]) {
+                        activeUsers[username].count++;
+                    } else {
+                        activeUsers[username] = { count: 1 };
+                    }
+                    updateAnnouncementDisplay(`${username} placed a pixel.`);
                 } else {
                     alert('Please choose a color before placing a pixel!');
                 }
+            } else if (activeUsers[username]?.count >= pixelLimit) {
+                alert(`You have reached your pixel limit of ${pixelLimit}!`);
             }
         }
 
         // Update announcement display
         function updateAnnouncementDisplay(message) {
             announcementDisplay.textContent = message;
-            announcementDisplay.style.display = 'block'; // Show announcement
+            announcementDisplay.style.display = 'block'; 
+        }
+
+        // Log user actions
+        function logUserAction(message) {
+            const userActionLog = document.getElementById('userActionLog');
+            userActionLog.innerHTML += `<p>${message}</p>`;
         }
 
         // Color palette event listeners
@@ -218,69 +242,113 @@
             });
         });
 
-        // Pan and Zoom functionality
-        const canvasContainer = document.getElementById('canvasContainer');
+        // Admin functionalities
+        document.getElementById('viewActiveUsersButton').addEventListener('click', function() {
+            alert(JSON.stringify(activeUsers, null, 2)); // Show active users in an alert
+        });
 
-        canvasContainer.addEventListener('wheel', (event) => {
-            event.preventDefault(); // Prevent default scroll behavior
-            if (event.deltaY < 0) {
-                scale += 0.1; // Zoom in
+        document.getElementById('banUserButton').addEventListener('click', function() {
+            const username = prompt("Enter username to ban/unban:");
+            if (activeUsers[username]) {
+                delete activeUsers[username]; // Unban
+                alert(`${username} has been unbanned.`);
             } else {
-                scale = Math.max(0.1, scale - 0.1); // Prevent zooming out too much
-            }
-            canvas.style.transform = `scale(${scale})`; // Apply zoom
-        });
-
-        // Mouse dragging for desktop
-        canvasContainer.addEventListener('mousedown', (event) => {
-            isDragging = true;
-            startX = event.clientX;
-            startY = event.clientY;
-            initialX = canvas.offsetLeft;
-            initialY = canvas.offsetTop;
-        });
-
-        canvasContainer.addEventListener('mousemove', (event) => {
-            if (isDragging) {
-                const deltaX = event.clientX - startX;
-                const deltaY = event.clientY - startY;
-                canvas.style.left = `${initialX + deltaX}px`;
-                canvas.style.top = `${initialY + deltaY}px`;
+                activeUsers[username] = { count: 0 }; // Ban or add user
+                alert(`${username} has been banned/unbanned.`);
             }
         });
 
-        canvasContainer.addEventListener('mouseup', () => {
-            isDragging = false;
+        document.getElementById('viewPixelLogsButton').addEventListener('click', function() {
+            let logs = "<h3>Pixel Logs:</h3>";
+            // Here you would ideally pull data from a more persistent log
+            for (let user in activeUsers) {
+                logs += `<p>User: ${user}, Pixels Placed: ${activeUsers[user].count}</p>`;
+            }
+            document.getElementById('userActionLog').innerHTML = logs; // Display logs
         });
 
-        // Touch dragging for mobile
-        canvasContainer.addEventListener('touchstart', (event) => {
-            isDragging = true;
-            startX = event.touches[0].clientX;
-            startY = event.touches[0].clientY;
-            initialX = canvas.offsetLeft;
-            initialY = canvas.offsetTop;
+        document.getElementById('clearAllPixelsButton').addEventListener('click', function() {
+            const pixels = document.querySelectorAll('.pixel');
+            pixels.forEach(pixel => {
+                pixel.style.backgroundColor = 'white';
+            });
+            for (let user in activeUsers) {
+                activeUsers[user].count = 0; // Reset user counts
+            }
+            updateAnnouncementDisplay("All pixels have been cleared!");
         });
 
-        canvasContainer.addEventListener('touchmove', (event) => {
-            if (isDragging) {
-                const deltaX = event.touches[0].clientX - startX;
-                const deltaY = event.touches[0].clientY - startY;
-                canvas.style.left = `${initialX + deltaX}px`;
-                canvas.style.top = `${initialY + deltaY}px`;
+        document.getElementById('resetUserPixelsButton').addEventListener('click', function() {
+            const username = prompt("Enter username to reset pixels:");
+            if (activeUsers[username]) {
+                activeUsers[username].count = 0; // Reset the user's count
+                updateAnnouncementDisplay(`Pixels of ${username} have been reset.`);
+            } else {
+                alert(`User ${username} not found.`);
             }
         });
 
-        canvasContainer.addEventListener('touchend', () => {
-            isDragging = false;
+        document.getElementById('applyPixelLimitButton').addEventListener('click', function() {
+            const limit = parseInt(document.getElementById('setPixelLimit').value);
+            if (!isNaN(limit) && limit > 0) {
+                pixelLimit = limit;
+                alert(`Pixel limit set to ${pixelLimit} pixels per user.`);
+            } else {
+                alert('Please enter a valid pixel limit.');
+            }
+        });
+
+        document.getElementById('togglePixelPlacementButton').addEventListener('click', function() {
+            canPlacePixel = !canPlacePixel;
+            const buttonText = canPlacePixel ? "Disable Pixel Placement" : "Enable Pixel Placement";
+            this.textContent = buttonText;
+            logUserAction(`Pixel placement has been ${canPlacePixel ? "enabled" : "disabled"}.`);
+        });
+
+        document.getElementById('userStatsButton').addEventListener('click', function() {
+            let stats = "<h3>User Statistics:</h3>";
+            for (let user in activeUsers) {
+                stats += `<p>User: ${user}, Pixels Placed: ${activeUsers[user].count}</p>`;
+            }
+            document.getElementById('userActionLog').innerHTML = stats; // Display stats
+        });
+
+        document.getElementById('exportPixelDataButton').addEventListener('click', function() {
+            alert("Export Pixel Data feature is not implemented yet.");
+        });
+
+        document.getElementById('importPixelDataButton').addEventListener('click', function() {
+            alert("Import Pixel Data feature is not implemented yet.");
+        });
+
+        document.getElementById('toggleDarkMode').addEventListener('click', function() {
+            document.body.classList.toggle('dark-mode');
+            alert('Dark mode toggled (this requires CSS adjustments).');
+        });
+
+        document.getElementById('postAnnouncementButton').addEventListener('click', function() {
+            const announcement = prompt("Enter announcement:");
+            if (announcement) {
+                updateAnnouncementDisplay(announcement);
+            }
+        });
+
+        document.getElementById('setCanvasSizeButton').addEventListener('click', function() {
+            const newSize = prompt("Enter new canvas size (must be a number, e.g., 120):");
+            if (newSize && !isNaN(newSize)) {
+                // Change canvas size logic goes here
+                alert(`Canvas size would be set to ${newSize} x ${newSize} (not implemented yet).`);
+            } else {
+                alert('Invalid size!');
+            }
         });
 
         // Admin console open command
         window.addEventListener('keydown', function(event) {
-            if (event.ctrlKey && event.key === 'm') { // Trigger admin access with Ctrl + M
+            if (event.ctrlKey && event.key === 'm') {
                 const adminCode = prompt("Enter admin code:");
                 if (adminCode === "minxex") {
-                    document.getElementById('adminPanel').style.display = 'block'; // Show admin panel
+                    document.getElementById('adminPanel').style.display = 'block'; 
                 } else {
                     alert("Invalid admin code");
                 }
