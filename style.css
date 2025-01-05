@@ -2,15 +2,24 @@ body {
     font-family: Arial, sans-serif;
 }
 
-#console {
-    padding: 20px;
-    border: 1px solid #ccc;
-    margin: 20px;
+#canvasContainer {
+    display: flex;
+    justify-content: center;
 }
 
-#adminPanel {
+#canvas {
+    border: 1px solid black;
+}
+
+.hidden {
+    display: none;
+}
+
+#adminMenu {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: white;
     padding: 20px;
-    border: 1px solid #000;
-    margin: 20px;
-    background-color: #f9f9f9;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
