@@ -3,118 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pixel Art Maker with Admin Panel</title>
+    <title>Pixel Art Maker</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             background-color: #f0f0f0;
+            color: #333;
             display: flex;
             flex-direction: column;
             align-items: center;
-            overflow: hidden; /* Prevents scrolling when zooming */
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            position: relative;
+        }
+        h1 {
+            margin-bottom: 10px;
+            font-size: 2rem;
         }
         #instructions {
-            margin: 20px;
-            font-size: 18px;
-            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
             text-align: center;
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
         #canvasContainer {
             position: relative;
             overflow: hidden; 
             width: 100%;
-            height: 100vh; /* Responsive */
+            max-width: 90vw; /* Responsive width */
+            height: 90vh; /* Responsive height */
             display: flex;
             justify-content: center;
             align-items: center;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
         #canvas {
             display: grid;
             grid-template-columns: repeat(120, 20px); /* Larger canvas: 120x120 */
             grid-auto-rows: 20px;
-            transform-origin: center; /* Zoom from center */
-            transition: transform 0.2s; /* Smooth zoom effect */
             touch-action: none; /* Prevents touch actions like scrolling */
             position: absolute; /* Allowing positioning for drag functionality */
             transform: scale(0.2); /* Reduce zoom out */
+            cursor: pointer;
+            user-select: none; /* Prevent text selection during mouse drag */
+            transition: transform 0.2s; /* Smooth zoom effect */
         }
         .pixel {
             width: 20px;
             height: 20px;
             background-color: white;
             border: 1px solid #ddd;
+            box-sizing: border-box; /* Include padding and border in height/width */
         }
-        #controls, #adminPanel {
+        #controls {
             margin-top: 20px;
             display: flex;
             align-items: center;
             gap: 10px;
             flex-wrap: wrap; /* Allows wrapping on small screens */
         }
-        #timer {
-            position: absolute;
-            font-size: 20px;
-            color: red;
-            padding: 10px;
-            z-index: 10; /* Above other elements */
-        }
-        #adminPanel {
-            display: none; /* Hidden by default */
-            background-color: white;
-            border: 1px solid #ccc;
-            padding: 10px;
-            position: fixed;
-            top: 50px;
-            left: 50px;
-            z-index: 1000;
-            max-height: 80%;
-            overflow-y: auto;
-            width: 300px; /* Fixed width for admin panel */
-        }
-        #adminPanel input, #adminPanel select {
-            width: initial; /* Width as per content */
-            min-width: 100px; /* Minimum width for usability */
-        }
         .color-palette {
             display: flex;
+            margin-top: 10px;
         }
         .palette-color {
-            width: 30px;
-            height: 30px;
+            width: 40px;
+            height: 40px;
             cursor: pointer;
-            border: 1px solid #ddd;
+            border: 2px solid transparent;
             margin-right: 2px;
+            transition: border 0.3s;
+        }
+        .palette-color:hover {
+            border: 2px solid #000; /* Highlight color on hover */
         }
         .selected {
             border: 2px solid #000; /* Highlight selected color */
         }
-        #announcement {
-            margin-top: 10px;
-            width: 100%;
-            min-height: 50px;
-            border: 1px solid #ccc;
-            padding: 5px;
-            resize: none; /* Prevent resizing */
-        }
         #announcementDisplay {
             margin-top: 20px; 
-            font-size: 18px; 
+            font-size: 1rem; 
             font-weight: bold; 
             color: green; /* Color for better visibility */
             display: none; /* Hidden by default */
+        }
+        #adminPanel {
+            display: none; /* Hidden by default */
+            position: fixed;
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            padding: 15px;
+            top: 20%;
+            left: 5%;
+            max-width: 300px;
+            overflow-y: auto;
+            max-height: 70vh; /* Responsive height */
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #30a7e3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        button:hover {
+            background-color: #227ebc;
+            transform: translateY(-2px);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        #toggleDarkModeButton {
+            background-color: #222;
+            color: #fff;
+        }
+        #toggleDarkModeButton:hover {
+            background-color: #444;
         }
     </style>
 </head>
 <body>
     <h1>Pixel Art Maker</h1>
     <div id="instructions">
-        <p>Instructions:</p>
+        <p><strong>Instructions for Placing Pixels:</strong></p>
         <ol>
-            <li>Select a color from the palette.</li>
-            <li>Enter your username.</li>
-            <li>Click on the grid to place a pixel.</li>
-            <li>To post an announcement, type your message and click 'Post Announcement'.</li>
-            <li>View real-time pixel placement and announcements on the screen.</li>
+            <li>Select a color from the palette below.</li>
+            <li>Enter your username in the input field.</li>
+            <li>Click or tap on the canvas to place a pixel of the selected color.</li>
+            <li>Enjoy creating your pixel art!</li>
         </ol>
     </div>
     <div id="controls">
@@ -126,63 +153,27 @@
             <div class="palette-color" style="background-color: #FF00FF;" data-color="#FF00FF"></div>
             <div class="palette-color" style="background-color: #00FFFF;" data-color="#00FFFF"></div>
         </div>
-        <button id="resetButton">Reset Canvas</button>
         <label for="username">Username: </label>
         <input type="text" id="username" placeholder="Enter username" />
-        <button id="lockColorButton">Lock Color</button> 
     </div>
     <div id="canvasContainer">
-        <div id="timer"></div>
+        <div id="announcementDisplay"></div> <!-- Display announcements here -->
         <div id="canvas"></div>
     </div>
 
-    <div id="announcementDisplay"></div> <!-- Display announcements here -->
-
     <div id="adminPanel">
         <h2>Admin Panel</h2>
-        <!-- List of Admin Features -->
-        <div>
-            <button id="viewActiveUsersButton">View Active Users</button>
-            <button id="banUserButton">Ban/Unban User</button>
-            <button id="viewAllPixelsButton">View All Pixels</button>
-            <button id="resetCanvasButton">Reset Canvas</button>
-            <button id="resetAllPixelsButton">Reset All Pixels</button>
-            <button id="showUserPixelsButton">Show User Pixels</button>
-            <button id="deleteLastPixelButton">Delete Last Pixel</button>
-            <button id="togglePixelPlacementButton">Disable/Enable Pixel Placement</button>
-            <label for="timerDuration">Set Timer (secs): </label>
-            <input type="number" id="timerDuration" value="300" />
-            <button id="setTimerButton">Set Timer</button>
-            <button id="toggleTimerPositionButton">Toggle Timer Position</button>
-            <textarea id="announcement" placeholder="Post Announcement"></textarea>
-            <button id="postAnnouncementButton">Post Announcement</button>
-            <button id="clearAnnouncementsButton">Clear Announcements</button>
-            <button id="viewPixelLogsButton">View Pixel Logs</button>
-            <button id="exportPixelDataButton">Export Pixel Data</button>
-            <button id="importPixelDataButton">Import Pixel Data</button>
-            <button id="toggleDarkModeButton">Toggle Dark Mode</button>
-            <button id="manageColorsButton">Manage Colors</button>
-            <button id="userStatsButton">User Stats</button>
-            <button id="systemConfigurationButton">System Configuration</button>
-            <button id="viewRecentActivitiesButton">View Recent Activities</button>
-            <button id="closeAdminPanelButton">Close Admin Panel</button>
-        </div>
-        <div id="userLogs"></div>
-        <div id="warningDisplay" style="color: red; font-weight: bold;"></div>
+        <button id="closeAdminPanelButton">Close Admin Panel</button>
+        <!-- Additional admin functionalities would go here -->
     </div>
 
     <script>
         const gridSize = 120; // 120x120 grid (larger canvas)
         const canvas = document.getElementById('canvas');
-        const timerDisplay = document.getElementById('timer');
         const usernameInput = document.getElementById('username');
-        const adminPanel = document.getElementById('adminPanel');
-        const pixelsLog = [];
-        const activeUsers = new Set(); // To store active users
+        const announcementDisplay = document.getElementById('announcementDisplay');
         let canPlacePixel = true;
-        let timerDuration = 300; // default 5 minutes in seconds
-        let lastPixel = null; // to track last pixel placed
-        let scale = 0.2; // Reduced scaling from zoom-out
+        let scale = 0.2; // Initial zoom level
         let isDragging = false;
         let startX = 0, startY = 0, initialX = 0, initialY = 0;
 
@@ -191,167 +182,31 @@
             const pixel = document.createElement('div');
             pixel.classList.add('pixel');
             pixel.addEventListener('click', function() {
-                placePixel(pixel, i);
+                placePixel(pixel);
             });
             canvas.appendChild(pixel);
         }
 
         // Function to place pixel
-        function placePixel(pixel, index) {
+        function placePixel(pixel) {
             if (canPlacePixel) {
                 const username = usernameInput.value || 'Anonymous';
                 const selectedColor = document.querySelector('.palette-color.selected')?.getAttribute('data-color');
 
                 if (selectedColor) {
                     pixel.style.backgroundColor = selectedColor;
-                    pixelsLog.push({ username, index, color: selectedColor }); // Record the placement
-                    lastPixel = { pixel, color: selectedColor }; // Track the last pixel
-                    activeUsers.add(username); // Add user to active users
-                    startTimer();
-                    updateAnnouncementDisplay(`${username} placed a pixel at index ${index} with color ${selectedColor}`);
+                    updateAnnouncementDisplay(`${username} placed a pixel with color ${selectedColor}`);
                 } else {
                     alert('Please choose a color before placing a pixel!');
                 }
-            } else {
-                alert('You cannot place another pixel yet! Wait for the timer to finish or the admin to enable pixel placement.');
             }
         }
 
-        // Start a timer to control pixel placement
-        function startTimer() {
-            canPlacePixel = false;
-            timerDisplay.textContent = `Time until you can place the next pixel: ${formatTime(timerDuration)}`;
-
-            const timerInterval = setInterval(() => {
-                timerDuration--;
-                timerDisplay.textContent = `Time until you can place the next pixel: ${formatTime(timerDuration)}`;
-
-                if (timerDuration <= 0) {
-                    clearInterval(timerInterval);
-                    canPlacePixel = true;
-                    timerDuration = 300; // Reset timer to default
-                    timerDisplay.textContent = "You can place a pixel again!";
-                }
-            }, 1000);
-        }
-
-        // Format timer display
-        function formatTime(seconds) {
-            const minutes = Math.floor(seconds / 60);
-            const secs = seconds % 60;
-            return `${minutes}m ${secs < 10 ? '0' : ''}${secs}s`;
-        }
-
-        // Reset Canvas
-        document.getElementById('resetCanvasButton').addEventListener('click', function() {
-            const pixels = document.querySelectorAll('.pixel');
-            pixels.forEach(pixel => {
-                pixel.style.backgroundColor = 'white';
-            });
-            pixelsLog.length = 0; // Reset user logs
-            activeUsers.clear(); // Clear active users
-            updateAnnouncementDisplay("Canvas has been reset."); // Update announcement display
-        });
-
-        // Reset All Pixels
-        document.getElementById('resetAllPixelsButton').addEventListener('click', function() {
-            const pixels = document.querySelectorAll('.pixel');
-            pixels.forEach(pixel => {
-                pixel.style.backgroundColor = 'white';
-            });
-            pixelsLog.length = 0; // Reset user logs
-            activeUsers.clear(); // Clear active users
-            alert("All pixels have been reset!");
-            updateAnnouncementDisplay("All pixels have been reset.");
-        });
-
-        // Show User Pixels
-        document.getElementById('showUserPixelsButton').addEventListener('click', function() {
-            const username = prompt("Enter username to show pixels:");
-            const userPixels = pixelsLog.filter(log => log.username === username);
-            if (userPixels.length > 0) {
-                let userPixelInfo = `<h3>Pixels placed by ${username}:</h3>`;
-                userPixels.forEach(log => {
-                    userPixelInfo += `Index: ${log.index}, Color: ${log.color}<br>`;
-                });
-                document.getElementById('userLogs').innerHTML = userPixelInfo;
-            } else {
-                alert(`No pixels found for user ${username}.`);
-            }
-        });
-
-        // Delete Last Placed Pixel
-        document.getElementById('deleteLastPixelButton').addEventListener('click', function() {
-            if (lastPixel) {
-                lastPixel.pixel.style.backgroundColor = 'white'; // Remove color
-                pixelsLog.pop(); // Remove last log entry
-                lastPixel = null; // Reset last pixel
-                alert("Last pixel deleted!");
-                updateAnnouncementDisplay("Last pixel has been deleted.");
-            } else {
-                alert("No pixels to delete!");
-            }
-        });
-
-        // Toggle Pixel Placement
-        document.getElementById('togglePixelPlacementButton').addEventListener('click', function() {
-            canPlacePixel = !canPlacePixel;
-            const buttonText = canPlacePixel ? "Disable Pixel Placement" : "Enable Pixel Placement";
-            this.textContent = buttonText;
-            document.getElementById('warningDisplay').textContent = canPlacePixel ? "" : "Pixel placement is currently disabled!";
-        });
-
-        // Set Timer
-        document.getElementById('setTimerButton').addEventListener('click', function() {
-            const newDuration = parseInt(document.getElementById('timerDuration').value, 10);
-            if (!isNaN(newDuration) && newDuration > 0) {
-                timerDuration = newDuration;
-                alert(`Timer duration set to ${timerDuration} seconds.`);
-            } else {
-                alert('Please enter a valid timer duration.');
-            }
-        });
-
-        // Clear Announcements
-        document.getElementById('clearAnnouncementsButton').addEventListener('click', function() {
-            document.getElementById('announcementDisplay').textContent = "";
-            alert("All announcements cleared.");
-        });
-
-        // View Pixel Logs
-        document.getElementById('viewPixelLogsButton').addEventListener('click', function() {
-            let logs = '<h3>Pixel Logs:</h3>';
-            pixelsLog.forEach(log => {
-                logs += `<strong>${log.username}</strong> placed a pixel at index ${log.index} with color ${log.color}<br>`;
-            });
-            document.getElementById('userLogs').innerHTML = logs;
-        });
-
-        // Post Announcements
-        document.getElementById('postAnnouncementButton').addEventListener('click', function() {
-            const announcementText = document.getElementById('announcement').value;
-            updateAnnouncementDisplay(announcementText);
-            document.getElementById('announcement').value = ""; // Clear the text area
-        });
-
-        // Function to update announcements on the screen
+        // Update announcement display
         function updateAnnouncementDisplay(message) {
-            const announcementDisplay = document.getElementById('announcementDisplay');
             announcementDisplay.textContent = message;
             announcementDisplay.style.display = 'block'; // Show announcement
         }
-
-        // Admin access via console
-        window.addEventListener('keydown', function(event) {
-            if (event.ctrlKey && event.key === 'm') { // Trigger admin access with Ctrl + M
-                const adminCode = prompt("Enter admin code:");
-                if (adminCode === "minxex") {
-                    adminPanel.style.display = 'block'; // Show admin panel
-                } else {
-                    alert("Invalid admin code");
-                }
-            }
-        });
 
         // Color palette event listeners
         const paletteColors = document.querySelectorAll(".palette-color");
@@ -363,7 +218,74 @@
             });
         });
 
-        // Additional admin features can be implemented based on needs...
+        // Pan and Zoom functionality
+        const canvasContainer = document.getElementById('canvasContainer');
+
+        canvasContainer.addEventListener('wheel', (event) => {
+            event.preventDefault(); // Prevent default scroll behavior
+            if (event.deltaY < 0) {
+                scale += 0.1; // Zoom in
+            } else {
+                scale = Math.max(0.1, scale - 0.1); // Prevent zooming out too much
+            }
+            canvas.style.transform = `scale(${scale})`; // Apply zoom
+        });
+
+        // Mouse dragging for desktop
+        canvasContainer.addEventListener('mousedown', (event) => {
+            isDragging = true;
+            startX = event.clientX;
+            startY = event.clientY;
+            initialX = canvas.offsetLeft;
+            initialY = canvas.offsetTop;
+        });
+
+        canvasContainer.addEventListener('mousemove', (event) => {
+            if (isDragging) {
+                const deltaX = event.clientX - startX;
+                const deltaY = event.clientY - startY;
+                canvas.style.left = `${initialX + deltaX}px`;
+                canvas.style.top = `${initialY + deltaY}px`;
+            }
+        });
+
+        canvasContainer.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        // Touch dragging for mobile
+        canvasContainer.addEventListener('touchstart', (event) => {
+            isDragging = true;
+            startX = event.touches[0].clientX;
+            startY = event.touches[0].clientY;
+            initialX = canvas.offsetLeft;
+            initialY = canvas.offsetTop;
+        });
+
+        canvasContainer.addEventListener('touchmove', (event) => {
+            if (isDragging) {
+                const deltaX = event.touches[0].clientX - startX;
+                const deltaY = event.touches[0].clientY - startY;
+                canvas.style.left = `${initialX + deltaX}px`;
+                canvas.style.top = `${initialY + deltaY}px`;
+            }
+        });
+
+        canvasContainer.addEventListener('touchend', () => {
+            isDragging = false;
+        });
+
+        // Admin console open command
+        window.addEventListener('keydown', function(event) {
+            if (event.ctrlKey && event.key === 'm') { // Trigger admin access with Ctrl + M
+                const adminCode = prompt("Enter admin code:");
+                if (adminCode === "minxex") {
+                    document.getElementById('adminPanel').style.display = 'block'; // Show admin panel
+                } else {
+                    alert("Invalid admin code");
+                }
+            }
+        });
 
         // Set default selected color on load
         document.querySelector('.palette-color').classList.add('selected');
