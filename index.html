@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel Art Maker</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            overflow: hidden; /* Prevent scrolling */
+        }
+
+        #grid {
+            display: grid;
+            grid-template-columns: repeat(1000, 10px); /* Change to fit 1000 columns */
+            grid-template-rows: repeat(1000, 10px);    /* Change to fit 1000 rows */
+            border: 1px solid black;
+        }
+
+        .pixel {
+            width: 10px;         /* Change size to fit the view */
+            height: 10px;        /* Change size to fit the view */
+            border: 1px solid #ddd;
+            background-color: white; /* Default color */
+            cursor: pointer;
+        }
+
+        #colorPicker {
+            margin: 20px;
+        }
+
+        #message {
+            margin: 10px;
+            font-size: 16px;
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>Pixel Art Maker</h1>
+    <input type="color" id="colorPicker" value="#000000">
+    <div id="grid"></div>
+    <div id="message"></div>
+
+    <script>
+        const grid = document.getElementById('grid');
+        const colorPicker = document.getElementById('colorPicker');
+        const message = document.getElementById('message');
+        let canPlacePixel = true;
+
+        // Limit the number of pixels created to avoid performance issues.
+        // Create the grid
+        for (let i = 0; i < 1000 * 1000; i++) {
+            const pixel = document.createElement('div');
+            pixel.className = 'pixel';
+            pixel.addEventListener('click', () => placePixel(pixel));
+            grid.appendChild(pixel);
+        }
+
+        function placePixel(pixel) {
+            if (canPlacePixel) {
+                pixel.style.backgroundColor = colorPicker.value;
+                message.textContent = ''; // Clear any previous message
+                canPlacePixel = false; // Prevent further pixel placement
+
+                // Enable pixel placement after 60 seconds
+                setTimeout(() => {
+                    canPlacePixel = true;
+                }, 60000); // 60000 milliseconds = 1 minute
+            } else {
+                message.textContent = 'Please wait 1 minute before placing another pixel!';
+            }
+        }
+    </script>
+</body>
+</html>
