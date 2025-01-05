@@ -7,7 +7,6 @@ const server = http.createServer(app);
 const io = socketIo(server);
 
 const PORT = process.env.PORT || 3000;
-const ADMIN_PASSWORD = 'your_admin_password'; // Set your admin password here
 const canvasSize = 50; // Define a canvas size of 50x50 pixels
 let pixelData = Array(canvasSize).fill().map(() => Array(canvasSize).fill('white'));
 
@@ -34,28 +33,21 @@ io.on('connection', (socket) => {
     });
 });
 
-// Middleware to check admin authentication
-const authenticateAdmin = (req, res, next) => {
-    const password = req.headers['admin-password'];
-    if (password === ADMIN_PASSWORD) {
-        return next();
-    }
-    return res.status(403).send('Forbidden');
-};
-
 // Clear canvas route
-app.post('/admin/clear', authenticateAdmin, (req, res) => {
+app.post('/admin/clear', (req, res) => {
+    // Admin clearing logic can remain
     pixelData = Array(canvasSize).fill().map(() => Array(canvasSize).fill('white'));
     io.emit('canvasCleared');
     res.send('Canvas cleared successfully.');
 });
 
-// Get connected users
-app.get('/admin/users', authenticateAdmin, (req, res) => {
+// Read connected users (optional, if you'd like to implement it)
+app.get('/admin/users', (req, res) => {
     const connectedUsers = Array.from(io.sockets.sockets.keys());
     res.json({ users: connectedUsers });
 });
 
+// Start the server
 server.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
