@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Pixel Art Maker</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <h1>Real-Time Pixel Art Maker</h1>
+    <div id="canvasContainer">
+        <div id="canvas"></div>
+    </div>
+
+    <div id="controls">
+        <div class="palette" id="palette">
+            <div class="palette-color" style="background-color: red;"></div>
+            <div class="palette-color" style="background-color: green;"></div>
+            <div class="palette-color" style="background-color: blue;"></div>
+            <div class="palette-color" style="background-color: yellow;"></div>
+            <div class="palette-color" style="background-color: black;"></div>
+            <div class="palette-color" style="background-color: white;"></div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const socket = io();
+        const colors = document.querySelectorAll('.palette-color');
+        let selectedColor = 'black';
+
+        colors.forEach(color => {
+            color.addEventListener('click', () => {
+                selectedColor = color.style.backgroundColor;
+                colors.forEach(c => c.classList.remove('selected'));
+                color.classList.add('selected');
+            });
+        });
+
+        const gridSize = 120;
+        let pixelSize = 20;
+
+        // Create the grid
+        for (let y = 0; y < gridSize; y++) {
+            for (let x = 0; x < gridSize; x++) {
+                const pixel = document.createElement('div');
+                pixel.classList.add('pixel');
+                pixel.style.width = pixel.style.height = `${pixelSize}px`;
+                pixel.dataset.x = x;
+                pixel.dataset.y = y;
+
+                pixel.addEventListener('click', function() {
+                    placePixel(x, y, selectedColor);
+                });
+
+                canvas.appendChild(pixel);
+            }
+        }
+
+        function placePixel(x, y, color) {
+            socket.emit('placePixel', { x: x, y: y, color: color });
+        }
+
+        socket.on('pixelPlaced', ({ x, y, color }) => {
+            const pixel = canvas.children[y * gridSize + x];
+            if (pixel) {
+                pixel.style.backgroundColor = color;
+            }
+        });
+
+        socket.on('init', (pixelData) => {
+            pixelData.forEach((row, y) => {
+                row.forEach((color, x) => {
+                    const pixel = canvas.children[y * gridSize + x];
+                    if (pixel) {
+                        pixel.style.backgroundColor = color;
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
