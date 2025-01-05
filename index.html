@@ -13,6 +13,12 @@
             align-items: center;
             overflow: hidden; /* Prevents scrolling when zooming */
         }
+        #instructions {
+            margin: 20px;
+            font-size: 18px;
+            color: #333;
+            text-align: center;
+        }
         #canvasContainer {
             position: relative;
             overflow: hidden; 
@@ -100,6 +106,16 @@
 </head>
 <body>
     <h1>Pixel Art Maker</h1>
+    <div id="instructions">
+        <p>Instructions:</p>
+        <ol>
+            <li>Select a color from the palette.</li>
+            <li>Enter your username.</li>
+            <li>Click on the grid to place a pixel.</li>
+            <li>To post an announcement, type your message and click 'Post Announcement'.</li>
+            <li>View real-time pixel placement and announcements on the screen.</li>
+        </ol>
+    </div>
     <div id="controls">
         <div class="color-palette">
             <div class="palette-color" style="background-color: #FF0000;" data-color="#FF0000"></div>
@@ -139,7 +155,7 @@
     </div>
 
     <script>
-        const gridSize = 120; // 120x120 grid (slightly larger canvas)
+        const gridSize = 120; // 120x120 grid (larger canvas)
         const canvas = document.getElementById('canvas');
         const timerDisplay = document.getElementById('timer');
         const usernameInput = document.getElementById('username');
@@ -172,6 +188,9 @@
                     pixelsLog.push({username, index, color: selectedColor}); // Record the placement
                     lastPixel = { pixel, color: selectedColor }; // Track the last pixel
                     startTimer();
+                    updateAnnouncementDisplay(`${username} placed a pixel at index ${index} with color ${selectedColor}`);
+                    // Simulate real-time update (in real applications, use WebSockets here)
+                    // socket.emit('pixelUpdate', {username, index, selectedColor});
                 } else {
                     alert('Please choose a color before placing a pixel!');
                 }
@@ -210,6 +229,7 @@
                 pixel.style.backgroundColor = 'white';
             });
             pixelsLog.length = 0; // Reset user logs
+            updateAnnouncementDisplay("Canvas has been reset."); // Update announcement display
         });
 
         // Delete Last Placed Pixel
@@ -219,6 +239,7 @@
                 pixelsLog.pop(); // Remove last log entry
                 lastPixel = null; // Reset last pixel
                 alert("Last pixel deleted!");
+                updateAnnouncementDisplay("Last pixel has been deleted."); // Update announcement display
             } else {
                 alert("No pixels to delete!");
             }
@@ -238,6 +259,7 @@
             });
             pixelsLog.length = 0; // Reset user logs
             alert("All pixels have been reset!");
+            updateAnnouncementDisplay("All pixels have been reset."); // Update announcement display
         });
 
         document.getElementById('setTimerButton').addEventListener('click', function() {
@@ -277,18 +299,15 @@
         // Post Announcements
         document.getElementById('postAnnouncementButton').addEventListener('click', function() {
             const announcementText = document.getElementById('announcement').value;
-            showAnnouncement(announcementText); // Show the announcement
+            updateAnnouncementDisplay(announcementText);
             document.getElementById('announcement').value = ""; // Clear the text area
         });
 
-        // Function to display announcements on the screen
-        function showAnnouncement(message) {
+        // Function to update announcements on the screen
+        function updateAnnouncementDisplay(message) {
             const announcementDisplay = document.getElementById('announcementDisplay');
             announcementDisplay.textContent = message;
             announcementDisplay.style.display = 'block'; // Show announcement
-            setTimeout(() => {
-                announcementDisplay.style.display = 'none'; // Hide after 5 seconds
-            }, 5000);
         }
 
         // Admin access via console
